@@ -18,10 +18,6 @@
     {
       "url": "https://api.village.ai/v2",
       "description": "Production server"
-    },
-    {
-      "url": "https://staging-api.village.ai/v2",
-      "description": "Staging server (for testing)"
     }
   ],
   "security": [
