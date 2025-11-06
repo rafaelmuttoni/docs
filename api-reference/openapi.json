@@ -3,7 +3,7 @@
   "info": {
     "title": "Village API",
     "version": "2.0.0",
-    "description": "Village Relationship Intelligence API enables partners to access connection paths and relationship data through integrated applications.\n\n## Authentication\n\nPartners generate user tokens via the `/auth/tokens` endpoint using their Partner API Key. These tokens are then used by partner applications to make authenticated requests on behalf of users.\n\n## Base URL\n\nAll API requests should be made to: `https://api.village.ai/v2`\n\n## Rate Limits\n\n- **Per User**: 100 requests/minute\n- **Per Partner**: 10,000 requests/minute\n- **Search Endpoints**: 20 requests/minute per user\n\nRate limit headers are included in all responses:\n- `X-RateLimit-Limit`: Maximum requests allowed\n- `X-RateLimit-Remaining`: Requests remaining in current window\n- `X-RateLimit-Reset`: Unix timestamp when limit resets",
+    "description": "Village Relationship Intelligence API enables partners to access connection paths and relationship data through integrated applications.\n\n## Authentication\n\nPartners generate user tokens via the `/auth/tokens` endpoint using their Partner API Key (format: `sk_*`). Direct users can use User API Keys (format: `ak_*`) directly without token generation.\n\n## Base URL\n\nAll API requests should be made to: `https://api.village.ai/v2`\n\n## Rate Limits\n\n- **Per User**: 100 requests/minute\n- **Per Partner**: 10,000 requests/minute\n- **Search Endpoints**: 20 requests/minute per user\n\nRate limit headers are included in all responses:\n- `X-RateLimit-Limit`: Maximum requests allowed\n- `X-RateLimit-Remaining`: Requests remaining in current window\n- `X-RateLimit-Reset`: Unix timestamp when limit resets",
     "contact": {
       "name": "Village API Support",
       "url": "https://village.ai/support",
@@ -31,16 +31,16 @@
       "description": "Token generation and management"
     },
     {
+      "name": "User",
+      "description": "User profile and integration information"
+    },
+    {
       "name": "People",
       "description": "Operations on people in the network"
     },
     {
       "name": "Companies",
       "description": "Operations on companies"
-    },
-    {
-      "name": "Health",
-      "description": "API health and status"
     }
   ],
   "paths": {
@@ -48,7 +48,7 @@
       "post": {
         "tags": ["Authentication"],
         "summary": "Generate User Token",
-        "description": "Partners use this endpoint to generate access tokens for their users. The token allows the partner's application to make API requests on behalf of the user.\n\n**Authentication**: Requires Partner API Key in `secret-key` header.",
+        "description": "Partners use this endpoint to generate access tokens for their users. The token allows the partner's application to make API requests on behalf of the user.\n\n**Authentication**: Requires Partner API Key (format: `sk_*`) in `secret-key` header.",
         "operationId": "generateUserToken",
         "security": [
           {
@@ -67,19 +67,7 @@
                   "summary": "Basic token generation",
                   "value": {
                     "external_user_id": "partner_user_12345",
-                    "scopes": ["read:network", "read:paths"]
-                  }
-                },
-                "with_metadata": {
-                  "summary": "Token with user metadata",
-                  "value": {
-                    "external_user_id": "partner_user_12345",
-                    "scopes": ["read:network", "read:paths", "read:search"],
-                    "expires_in": 7200,
-                    "metadata": {
-                      "user_email": "john.doe@example.com",
-                      "user_name": "John Doe"
-                    }
+                    "email": "john.doe@example.com"
                   }
                 }
               }
@@ -92,30 +80,25 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/SuccessResponse"
+                  "type": "object",
+                  "required": ["data", "metadata"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/TokenResponse"
                     },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "$ref": "#/components/schemas/TokenResponse"
-                        }
-                      }
+                    "metadata": {
+                      "$ref": "#/components/schemas/ResponseMetadata"
                     }
-                  ]
+                  }
                 },
                 "example": {
-                  "success": true,
                   "data": {
                     "access_token": "village_usr_abc123def456ghi789",
                     "token_type": "bearer",
                     "expires_in": 3600,
-                    "expires_at": "2024-01-06T13:00:00Z",
-                    "scopes": ["read:network", "read:paths"]
+                    "expires_at": "2024-01-06T13:00:00Z"
                   },
-                  "meta": {
+                  "metadata": {
                     "request_id": "req_abc123",
                     "timestamp": "2024-01-06T12:00:00Z",
                     "api_version": "2.0"
@@ -139,10 +122,123 @@
         }
       }
     },
+    "/user": {
+      "get": {
+        "tags": ["User"],
+        "summary": "Get User Profile",
+        "description": "Returns the authenticated user's profile and sync status.",
+        "operationId": "getUser",
+        "responses": {
+          "200": {
+            "description": "User profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "metadata"],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/User"
+                    },
+                    "metadata": {
+                      "$ref": "#/components/schemas/ResponseMetadata"
+                    }
+                  }
+                },
+                "example": {
+                  "data": {
+                    "id": "user_abc123",
+                    "email": "john@example.com",
+                    "name": "John Doe",
+                    "created_at": "2024-01-01T00:00:00Z",
+                    "is_sync_complete": true,
+                    "is_active": true
+                  },
+                  "metadata": {
+                    "request_id": "req_abc123",
+                    "timestamp": "2024-01-06T12:00:00Z",
+                    "api_version": "2.0"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/user/integrations": {
+      "get": {
+        "tags": ["User"],
+        "summary": "Get User Integrations",
+        "description": "Returns the list of connected integrations (Google, LinkedIn) and their sync status.",
+        "operationId": "getUserIntegrations",
+        "responses": {
+          "200": {
+            "description": "Integrations retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "metadata"],
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "required": ["integrations"],
+                      "properties": {
+                        "integrations": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Integration"
+                          }
+                        }
+                      }
+                    },
+                    "metadata": {
+                      "$ref": "#/components/schemas/ResponseMetadata"
+                    }
+                  }
+                },
+                "example": {
+                  "data": {
+                    "integrations": [
+                      {
+                        "type": "google",
+                        "is_sync_complete": true
+                      },
+                      {
+                        "type": "linkedin",
+                        "is_sync_complete": true
+                      }
+                    ]
+                  },
+                  "metadata": {
+                    "request_id": "req_def456",
+                    "timestamp": "2024-01-06T12:00:00Z",
+                    "api_version": "2.0"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
     "/people/paths": {
       "post": {
         "tags": ["People"],
-        "summary": "Paths",
+        "summary": "Get Connection Paths",
         "description": "Retrieve connection paths from the authenticated user to a target person. Returns up to 10 paths ordered by warmth score (strongest connections first).\n\n**Accepted URL formats:**\n- LinkedIn profile URL: `https://linkedin.com/in/johndoe`\n- Village person ID: `person_abc123` (from search results)",
         "operationId": "getPersonPaths",
         "requestBody": {
@@ -177,35 +273,32 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/SuccessResponse"
-                    },
-                    {
+                  "type": "object",
+                  "required": ["data", "metadata"],
+                  "properties": {
+                    "data": {
                       "type": "object",
+                      "required": ["person", "paths", "total_paths"],
                       "properties": {
-                        "data": {
-                          "type": "object",
-                          "required": ["person", "paths", "total_paths"],
-                          "properties": {
-                            "person": {
-                              "$ref": "#/components/schemas/Person"
-                            },
-                            "paths": {
-                              "type": "array",
-                              "items": {
-                                "$ref": "#/components/schemas/ConnectionPath"
-                              }
-                            },
-                            "total_paths": {
-                              "type": "integer",
-                              "description": "Total number of available paths"
-                            }
+                        "person": {
+                          "$ref": "#/components/schemas/Person"
+                        },
+                        "paths": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/ConnectionPath"
                           }
+                        },
+                        "total_paths": {
+                          "type": "integer",
+                          "description": "Total number of available paths"
                         }
                       }
+                    },
+                    "metadata": {
+                      "$ref": "#/components/schemas/ResponseMetadata"
                     }
-                  ]
+                  }
                 }
               }
             }
@@ -231,7 +324,7 @@
     "/people/search": {
       "post": {
         "tags": ["People"],
-        "summary": "Search",
+        "summary": "Search People",
         "description": "Search for people in the user's network using natural language queries and filters. Results are ranked by relevance and include warmth scores for each person.\n\nSupports cursor-based pagination for large result sets.",
         "operationId": "searchPeople",
         "requestBody": {
@@ -272,25 +365,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/SuccessResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "type": "array",
-                          "items": {
-                            "$ref": "#/components/schemas/PersonSearchResult"
-                          }
-                        },
-                        "pagination": {
-                          "$ref": "#/components/schemas/Pagination"
-                        }
+                  "type": "object",
+                  "required": ["data", "metadata"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PersonSearchResult"
                       }
+                    },
+                    "metadata": {
+                      "$ref": "#/components/schemas/ResponseMetadata"
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
                     }
-                  ]
+                  }
                 }
               }
             }
@@ -316,7 +406,7 @@
     "/companies/paths": {
       "post": {
         "tags": ["Companies"],
-        "summary": "Paths",
+        "summary": "Get Company Paths",
         "description": "Retrieve connection paths to employees at a target company. Returns up to 50 employees with the strongest connections, each with their introducers.\n\n**Accepted URL formats:**\n- Company domain: `acme.com`\n- LinkedIn company page: `https://linkedin.com/company/acme`\n- Village company ID: `company_xyz789` (from search results)",
         "operationId": "getCompanyPaths",
         "requestBody": {
@@ -358,39 +448,36 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/SuccessResponse"
-                    },
-                    {
+                  "type": "object",
+                  "required": ["data", "metadata"],
+                  "properties": {
+                    "data": {
                       "type": "object",
+                      "required": [
+                        "company",
+                        "employees",
+                        "total_employees"
+                      ],
                       "properties": {
-                        "data": {
-                          "type": "object",
-                          "required": [
-                            "company",
-                            "employees",
-                            "total_employees"
-                          ],
-                          "properties": {
-                            "company": {
-                              "$ref": "#/components/schemas/Company"
-                            },
-                            "employees": {
-                              "type": "array",
-                              "items": {
-                                "$ref": "#/components/schemas/EmployeeWithPaths"
-                              }
-                            },
-                            "total_employees": {
-                              "type": "integer",
-                              "description": "Total number of reachable employees"
-                            }
+                        "company": {
+                          "$ref": "#/components/schemas/Company"
+                        },
+                        "employees": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/EmployeeWithPaths"
                           }
+                        },
+                        "total_employees": {
+                          "type": "integer",
+                          "description": "Total number of reachable employees"
                         }
                       }
+                    },
+                    "metadata": {
+                      "$ref": "#/components/schemas/ResponseMetadata"
                     }
-                  ]
+                  }
                 }
               }
             }
@@ -416,7 +503,7 @@
     "/companies/search": {
       "post": {
         "tags": ["Companies"],
-        "summary": "Search",
+        "summary": "Search Companies",
         "description": "Search for companies in the user's network using natural language queries and filters. Results include warmth scores indicating connection strength to the company.",
         "operationId": "searchCompanies",
         "requestBody": {
@@ -458,25 +545,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/SuccessResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "type": "array",
-                          "items": {
-                            "$ref": "#/components/schemas/CompanySearchResult"
-                          }
-                        },
-                        "pagination": {
-                          "$ref": "#/components/schemas/Pagination"
-                        }
+                  "type": "object",
+                  "required": ["data", "metadata"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CompanySearchResult"
                       }
+                    },
+                    "metadata": {
+                      "$ref": "#/components/schemas/ResponseMetadata"
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/Pagination"
                     }
-                  ]
+                  }
                 }
               }
             }
@@ -506,34 +590,30 @@
         "type": "apiKey",
         "in": "header",
         "name": "secret-key",
-        "description": "Partner API Key for generating user tokens"
+        "description": "Partner API Key (format: `sk_*`) for generating user tokens"
       },
       "BearerAuth": {
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT",
-        "description": "User access token (Bearer token)"
+        "description": "User access token (Bearer token) or User API Key (format: `ak_*`)"
       }
     },
     "schemas": {
       "GenerateTokenRequest": {
         "type": "object",
-        "required": ["external_user_id", "scopes"],
+        "required": ["external_user_id", "email"],
         "properties": {
           "external_user_id": {
             "type": "string",
             "description": "Partner's unique identifier for this user",
             "example": "partner_user_12345"
           },
-          "scopes": {
-            "type": "array",
-            "description": "Permissions granted to this token",
-            "items": {
-              "type": "string",
-              "enum": ["read:network", "read:paths", "read:search"]
-            },
-            "minItems": 1,
-            "example": ["read:network", "read:paths"]
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User's email address",
+            "example": "john.doe@example.com"
           },
           "expires_in": {
             "type": "integer",
@@ -542,20 +622,95 @@
             "maximum": 86400,
             "default": 3600,
             "example": 3600
+          }
+        }
+      },
+      "TokenResponse": {
+        "type": "object",
+        "required": [
+          "access_token",
+          "token_type",
+          "expires_in",
+          "expires_at"
+        ],
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "The generated access token",
+            "example": "village_usr_abc123def456ghi789"
           },
-          "metadata": {
-            "type": "object",
-            "description": "Optional metadata about the user",
-            "properties": {
-              "user_email": {
-                "type": "string",
-                "format": "email"
-              },
-              "user_name": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": true
+          "token_type": {
+            "type": "string",
+            "enum": ["bearer"],
+            "description": "Token type (always \"bearer\")",
+            "example": "bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "description": "Seconds until token expires",
+            "example": 3600
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp when token expires",
+            "example": "2024-01-06T13:00:00Z"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "required": ["id", "email", "name", "created_at", "is_sync_complete", "is_active"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^user_[a-zA-Z0-9]+$",
+            "description": "Unique identifier for the user",
+            "example": "user_abc123"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User email address",
+            "example": "john@example.com"
+          },
+          "name": {
+            "type": "string",
+            "description": "User full name",
+            "example": "John Doe"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Account creation timestamp",
+            "example": "2024-01-01T00:00:00Z"
+          },
+          "is_sync_complete": {
+            "type": "boolean",
+            "description": "Whether the user's initial sync is complete",
+            "example": true
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "User active status (reflects app_user.active value)",
+            "example": true
+          }
+        }
+      },
+      "Integration": {
+        "type": "object",
+        "required": ["type", "is_sync_complete"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["google", "linkedin"],
+            "description": "Integration type",
+            "example": "google"
+          },
+          "is_sync_complete": {
+            "type": "boolean",
+            "description": "Whether integration sync is complete",
+            "example": true
           }
         }
       },
@@ -743,76 +898,6 @@
           }
         }
       },
-      "BatchPathsRequest": {
-        "type": "object",
-        "required": ["urls"],
-        "properties": {
-          "urls": {
-            "type": "array",
-            "description": "List of person identifiers (mix of LinkedIn URLs and person IDs allowed)",
-            "minItems": 1,
-            "maxItems": 50,
-            "items": {
-              "type": "string"
-            },
-            "example": [
-              "https://linkedin.com/in/johndoe",
-              "person_def456",
-              "https://linkedin.com/in/janesmith"
-            ]
-          }
-        }
-      },
-      "BatchCompanyPathsRequest": {
-        "type": "object",
-        "required": ["urls"],
-        "properties": {
-          "urls": {
-            "type": "array",
-            "description": "List of company identifiers (mix of domains, LinkedIn URLs, and company IDs allowed)",
-            "minItems": 1,
-            "maxItems": 20,
-            "items": {
-              "type": "string"
-            },
-            "example": [
-              "acme.com",
-              "https://linkedin.com/company/techstart",
-              "company_bbb222"
-            ]
-          }
-        }
-      },
-      "SortPeopleRequest": {
-        "type": "object",
-        "required": ["urls"],
-        "properties": {
-          "urls": {
-            "type": "array",
-            "description": "List of person identifiers to sort by warmth (mix of LinkedIn URLs and person IDs allowed)",
-            "minItems": 1,
-            "maxItems": 100,
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "SortCompaniesRequest": {
-        "type": "object",
-        "required": ["urls"],
-        "properties": {
-          "urls": {
-            "type": "array",
-            "description": "List of company identifiers to sort by warmth (mix of domains, LinkedIn URLs, and company IDs allowed)",
-            "minItems": 1,
-            "maxItems": 100,
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
       "Person": {
         "type": "object",
         "required": ["id", "first_name", "last_name"],
@@ -869,7 +954,7 @@
               }
             }
           },
-          "current_position": {
+          "position": {
             "type": "object",
             "nullable": true,
             "description": "Current job position",
@@ -887,10 +972,17 @@
                 "nullable": true,
                 "description": "Start date (YYYY-MM-DD)",
                 "example": "2020-01-15"
+              },
+              "end_date": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "End date (YYYY-MM-DD), null if current position",
+                "example": null
               }
             }
           },
-          "profile_image_url": {
+          "image_url": {
             "type": "string",
             "format": "uri",
             "nullable": true,
@@ -946,7 +1038,7 @@
             "description": "Number of employees",
             "example": 5000
           },
-          "logo_url": {
+          "image_url": {
             "type": "string",
             "format": "uri",
             "nullable": true,
@@ -1184,214 +1276,54 @@
           }
         }
       },
-      "BatchPathResult": {
+      "ResponseMetadata": {
         "type": "object",
-        "required": ["url", "paths", "error"],
+        "required": ["request_id", "timestamp"],
         "properties": {
-          "url": {
+          "request_id": {
             "type": "string",
-            "description": "The person identifier from the request (LinkedIn URL or person ID)",
-            "example": "https://linkedin.com/in/johndoe"
+            "description": "Unique identifier for this request (for support/debugging)",
+            "example": "req_abc123"
           },
-          "paths": {
-            "type": "array",
-            "description": "Connection paths (empty if error occurred)",
-            "items": {
-              "$ref": "#/components/schemas/ConnectionPath"
-            }
-          },
-          "error": {
-            "type": "object",
-            "nullable": true,
-            "description": "Error details if this person failed (null if successful)",
-            "properties": {
-              "type": {
-                "type": "string",
-                "example": "not_found_error"
-              },
-              "message": {
-                "type": "string",
-                "example": "Person not found in network"
-              }
-            }
-          }
-        }
-      },
-      "BatchCompanyPathResult": {
-        "type": "object",
-        "required": ["url", "employees", "error"],
-        "properties": {
-          "url": {
-            "type": "string",
-            "description": "The company identifier from the request (domain, LinkedIn URL, or company ID)",
-            "example": "acme.com"
-          },
-          "employees": {
-            "type": "array",
-            "description": "Employees with paths (empty if error occurred)",
-            "items": {
-              "$ref": "#/components/schemas/EmployeeWithPaths"
-            }
-          },
-          "total_employees": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Total reachable employees count"
-          },
-          "error": {
-            "type": "object",
-            "nullable": true,
-            "properties": {
-              "type": {
-                "type": "string"
-              },
-              "message": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      },
-      "PersonWarmthScore": {
-        "type": "object",
-        "required": ["url", "person", "warmth_score", "warmth_label", "degree"],
-        "properties": {
-          "url": {
-            "type": "string",
-            "description": "The person identifier from the request (LinkedIn URL or person ID)",
-            "example": "https://linkedin.com/in/johndoe"
-          },
-          "person": {
-            "$ref": "#/components/schemas/Person"
-          },
-          "warmth_score": {
-            "type": "number",
-            "format": "float",
-            "minimum": 0,
-            "maximum": 10,
-            "example": 8.5
-          },
-          "warmth_label": {
-            "type": "string",
-            "enum": ["Poor", "Fair", "Good", "Very Good", "Excellent"],
-            "example": "Excellent"
-          },
-          "degree": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 3,
-            "example": 2
-          }
-        }
-      },
-      "CompanyWarmthScore": {
-        "type": "object",
-        "required": [
-          "url",
-          "company",
-          "warmth_score",
-          "warmth_label",
-          "reachable_employees_count"
-        ],
-        "properties": {
-          "url": {
-            "type": "string",
-            "description": "The company identifier from the request (domain, LinkedIn URL, or company ID)",
-            "example": "acme.com"
-          },
-          "company": {
-            "$ref": "#/components/schemas/Company"
-          },
-          "warmth_score": {
-            "type": "number",
-            "format": "float",
-            "minimum": 0,
-            "maximum": 10,
-            "example": 8.2
-          },
-          "warmth_label": {
-            "type": "string",
-            "enum": ["Poor", "Fair", "Good", "Very Good", "Excellent"],
-            "example": "Excellent"
-          },
-          "reachable_employees_count": {
-            "type": "integer",
-            "description": "Number of reachable employees at this company",
-            "example": 45
-          }
-        }
-      },
-      "TokenResponse": {
-        "type": "object",
-        "required": [
-          "access_token",
-          "token_type",
-          "expires_in",
-          "expires_at",
-          "scopes"
-        ],
-        "properties": {
-          "access_token": {
-            "type": "string",
-            "description": "The generated access token",
-            "example": "village_usr_abc123def456ghi789"
-          },
-          "token_type": {
-            "type": "string",
-            "enum": ["bearer"],
-            "description": "Token type (always \"bearer\")",
-            "example": "bearer"
-          },
-          "expires_in": {
-            "type": "integer",
-            "description": "Seconds until token expires",
-            "example": 3600
-          },
-          "expires_at": {
+          "timestamp": {
             "type": "string",
             "format": "date-time",
-            "description": "ISO 8601 timestamp when token expires",
-            "example": "2024-01-06T13:00:00Z"
+            "description": "ISO 8601 timestamp of the response",
+            "example": "2024-01-06T12:00:00Z"
           },
-          "scopes": {
-            "type": "array",
-            "description": "Permissions granted to this token",
-            "items": {
-              "type": "string"
-            },
-            "example": ["read:network", "read:paths"]
+          "api_version": {
+            "type": "string",
+            "description": "API version",
+            "example": "2.0"
           }
         }
       },
-      "SuccessResponse": {
+      "Pagination": {
         "type": "object",
-        "required": ["success", "data", "meta"],
+        "required": ["has_more"],
         "properties": {
-          "success": {
+          "cursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cursor for the next page (null if no more pages)",
+            "example": "eyJvZmZzZXQiOjIwLCJxdWVyeSI6ImVuZ2luZWVycyJ9"
+          },
+          "has_more": {
             "type": "boolean",
-            "enum": [true],
-            "description": "Indicates successful response"
+            "description": "Whether more results are available",
+            "example": true
           },
-          "data": {
-            "description": "Response data (schema varies by endpoint)"
-          },
-          "meta": {
-            "$ref": "#/components/schemas/ResponseMeta"
-          },
-          "pagination": {
-            "$ref": "#/components/schemas/Pagination"
+          "count": {
+            "type": "integer",
+            "description": "Number of items in current page",
+            "example": 20
           }
         }
       },
       "ErrorResponse": {
         "type": "object",
-        "required": ["success", "error", "meta"],
+        "required": ["error", "metadata"],
         "properties": {
-          "success": {
-            "type": "boolean",
-            "enum": [false],
-            "description": "Indicates error response"
-          },
           "error": {
             "type": "object",
             "required": ["type", "title", "status", "detail"],
@@ -1457,52 +1389,8 @@
               }
             }
           },
-          "meta": {
-            "$ref": "#/components/schemas/ResponseMeta"
-          }
-        }
-      },
-      "ResponseMeta": {
-        "type": "object",
-        "required": ["request_id", "timestamp"],
-        "properties": {
-          "request_id": {
-            "type": "string",
-            "description": "Unique identifier for this request (for support/debugging)",
-            "example": "req_abc123"
-          },
-          "timestamp": {
-            "type": "string",
-            "format": "date-time",
-            "description": "ISO 8601 timestamp of the response",
-            "example": "2024-01-06T12:00:00Z"
-          },
-          "api_version": {
-            "type": "string",
-            "description": "API version",
-            "example": "2.0"
-          }
-        }
-      },
-      "Pagination": {
-        "type": "object",
-        "required": ["has_more"],
-        "properties": {
-          "cursor": {
-            "type": "string",
-            "nullable": true,
-            "description": "Cursor for the next page (null if no more pages)",
-            "example": "eyJvZmZzZXQiOjIwLCJxdWVyeSI6ImVuZ2luZWVycyJ9"
-          },
-          "has_more": {
-            "type": "boolean",
-            "description": "Whether more results are available",
-            "example": true
-          },
-          "count": {
-            "type": "integer",
-            "description": "Number of items in current page",
-            "example": 20
+          "metadata": {
+            "$ref": "#/components/schemas/ResponseMetadata"
           }
         }
       }
@@ -1516,7 +1404,6 @@
               "$ref": "#/components/schemas/ErrorResponse"
             },
             "example": {
-              "success": false,
               "error": {
                 "type": "validation_error",
                 "title": "Invalid request parameters",
@@ -1531,7 +1418,7 @@
                   }
                 ]
               },
-              "meta": {
+              "metadata": {
                 "request_id": "req_xyz789",
                 "timestamp": "2024-01-06T12:00:00Z"
               }
@@ -1547,7 +1434,6 @@
               "$ref": "#/components/schemas/ErrorResponse"
             },
             "example": {
-              "success": false,
               "error": {
                 "type": "authentication_error",
                 "title": "Authentication required",
@@ -1555,7 +1441,7 @@
                 "detail": "Missing or invalid access token",
                 "trace_id": "trace_def456"
               },
-              "meta": {
+              "metadata": {
                 "request_id": "req_uvw123",
                 "timestamp": "2024-01-06T12:00:00Z"
               }
@@ -1571,15 +1457,14 @@
               "$ref": "#/components/schemas/ErrorResponse"
             },
             "example": {
-              "success": false,
               "error": {
                 "type": "authorization_error",
                 "title": "Insufficient permissions",
                 "status": 403,
-                "detail": "Token does not have required scope 'read:search'",
+                "detail": "Token does not have required scope",
                 "trace_id": "trace_jkl012"
               },
-              "meta": {
+              "metadata": {
                 "request_id": "req_opq789",
                 "timestamp": "2024-01-06T12:00:00Z"
               }
@@ -1595,7 +1480,6 @@
               "$ref": "#/components/schemas/ErrorResponse"
             },
             "example": {
-              "success": false,
               "error": {
                 "type": "not_found_error",
                 "title": "Person not found",
@@ -1603,7 +1487,7 @@
                 "detail": "Person with ID 'person_abc123' not found in network",
                 "trace_id": "trace_mno345"
               },
-              "meta": {
+              "metadata": {
                 "request_id": "req_lmn012",
                 "timestamp": "2024-01-06T12:00:00Z"
               }
@@ -1619,7 +1503,6 @@
               "$ref": "#/components/schemas/ErrorResponse"
             },
             "example": {
-              "success": false,
               "error": {
                 "type": "rate_limit_error",
                 "title": "Rate limit exceeded",
@@ -1627,7 +1510,7 @@
                 "detail": "You have exceeded the rate limit of 100 requests per minute. Please try again in 30 seconds.",
                 "trace_id": "trace_pqr678"
               },
-              "meta": {
+              "metadata": {
                 "request_id": "req_hij345",
                 "timestamp": "2024-01-06T12:00:00Z"
               }
@@ -1673,7 +1556,6 @@
               "$ref": "#/components/schemas/ErrorResponse"
             },
             "example": {
-              "success": false,
               "error": {
                 "type": "internal_error",
                 "title": "Internal server error",
@@ -1681,7 +1563,7 @@
                 "detail": "An unexpected error occurred. Please contact support with trace ID if the issue persists.",
                 "trace_id": "trace_stu901"
               },
-              "meta": {
+              "metadata": {
                 "request_id": "req_klm678",
                 "timestamp": "2024-01-06T12:00:00Z"
               }
