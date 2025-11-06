@@ -3,7 +3,7 @@
   "info": {
     "title": "Village API",
     "version": "2.0.0",
-    "description": "Village Relationship Intelligence API enables partners to access connection paths and relationship data through integrated applications.\n\n## Authentication\n\nPartners generate user tokens via the `/auth/tokens` endpoint using their Partner API Key (format: `sk_*`). Direct users can use User API Keys (format: `ak_*`) directly without token generation.\n\n## Base URL\n\nAll API requests should be made to: `https://api.village.ai/v2`\n\n## Rate Limits\n\n- **Per User**: 100 requests/minute\n- **Per Partner**: 10,000 requests/minute\n- **Search Endpoints**: 20 requests/minute per user\n\nRate limit headers are included in all responses:\n- `X-RateLimit-Limit`: Maximum requests allowed\n- `X-RateLimit-Remaining`: Requests remaining in current window\n- `X-RateLimit-Reset`: Unix timestamp when limit resets",
+    "description": "Village Relationship Intelligence API enables partners to access connection paths and relationship data through integrated applications.\n\n## Authentication\n\nPartners generate user tokens via the `/auth/tokens` endpoint using their Partner API Key (format: `sk_*`). Direct users can use User API Keys directly without token generation.\n\n## Base URL\n\nAll API requests should be made to: `https://api.village.ai/v2`\n\n## Rate Limits\n\n- **Per User**: 100 requests/minute\n- **Per Partner**: 10,000 requests/minute\n- **Search Endpoints**: 20 requests/minute per user\n\nRate limit headers are included in all responses:\n- `X-RateLimit-Limit`: Maximum requests allowed\n- `X-RateLimit-Remaining`: Requests remaining in current window\n- `X-RateLimit-Reset`: Unix timestamp when limit resets",
     "contact": {
       "name": "Village API Support",
       "url": "https://village.ai/support",
@@ -48,7 +48,7 @@
       "post": {
         "tags": ["Authentication"],
         "summary": "Generate User Token",
-        "description": "Partners use this endpoint to generate access tokens for their users. The token allows the partner's application to make API requests on behalf of the user.\n\n**Authentication**: Requires Partner API Key (format: `sk_*`) in `secret-key` header.",
+        "description": "Partners use this endpoint to generate access tokens for their users. The token allows the partner's application to make API requests on behalf of the user.\n\n**Authentication**: Requires Partner API Key in `secret-key` header.",
         "operationId": "generateUserToken",
         "security": [
           {
@@ -453,11 +453,7 @@
                   "properties": {
                     "data": {
                       "type": "object",
-                      "required": [
-                        "company",
-                        "employees",
-                        "total_employees"
-                      ],
+                      "required": ["company", "employees", "total_employees"],
                       "properties": {
                         "company": {
                           "$ref": "#/components/schemas/Company"
@@ -590,13 +586,13 @@
         "type": "apiKey",
         "in": "header",
         "name": "secret-key",
-        "description": "Partner API Key (format: `sk_*`) for generating user tokens"
+        "description": "Partner API Key for generating user tokens"
       },
       "BearerAuth": {
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT",
-        "description": "User access token (Bearer token) or User API Key (format: `ak_*`)"
+        "description": "User access token (Bearer token) or User API Key"
       }
     },
     "schemas": {
@@ -627,12 +623,7 @@
       },
       "TokenResponse": {
         "type": "object",
-        "required": [
-          "access_token",
-          "token_type",
-          "expires_in",
-          "expires_at"
-        ],
+        "required": ["access_token", "token_type", "expires_in", "expires_at"],
         "properties": {
           "access_token": {
             "type": "string",
@@ -660,7 +651,14 @@
       },
       "User": {
         "type": "object",
-        "required": ["id", "email", "name", "created_at", "is_sync_complete", "is_active"],
+        "required": [
+          "id",
+          "email",
+          "name",
+          "created_at",
+          "is_sync_complete",
+          "is_active"
+        ],
         "properties": {
           "id": {
             "type": "string",
