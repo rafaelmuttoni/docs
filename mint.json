@@ -1,0 +1,126 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "Village Docs",
+  "logo": {
+    "dark": "/logo/VillageAPILogo.png",
+    "light": "/logo/VillageAPILogo.png"
+  },
+  "favicon": "/logo/16x16.png",
+  "colors": {
+    "primary": "#2DBFD4",
+    "light": "#2DBFD4",
+    "dark": "#2DBFD4",
+    "anchors": {
+      "from": "#2DBFD4",
+      "to": "#14AE75"
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "Pricing",
+      "url": "https://village.do/landing/pricing"
+    },
+    {
+      "name": "Schedule demo",
+      "url": "https://village.do/landing/schedule-demo"
+    }
+  ],
+  "analytics": {
+    "posthog": {
+        "apiKey": "phc_cWZiUS6cHGvUDyCMDRK8Cvoayv5m6x6YOT02RW91vOX"
+    }
+  },
+  "topbarCtaButton": {
+    "name": "Platform Admin",
+    "url": "https://village.do/platform"
+  },
+  "tabs": [
+    {
+      "name": "API Reference",
+      "url": "api-reference",
+      "openapi": "/api-reference/openapi.json"
+    }
+  ],
+  "anchors": [
+    {
+      "name": "Learn more about Village",
+      "icon": "info",
+      "url": "https://village.do/"
+    },
+    {
+      "name": "Playground",
+      "icon": "play",
+      "url": "https://village.do/platform/playground"
+    },
+    {
+      "name": "Usage",
+      "icon": "chart-simple",
+      "url": "https://village.do/platform/usage"
+    },
+    {
+      "name": "Settings",
+      "icon": "gear",
+      "url": "https://village.do/platform/settings"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": [
+        "introduction",
+        "quickstart",
+        "villagevs",
+        "network-map"
+      ]
+    },
+    {
+      "group": "Embedded UIs",
+      "pages": [
+        "embedded-uis/sync-network",
+        "embedded-uis/search",
+        "embedded-uis/find-intro",
+        "embedded-uis/browse-paths",
+        "embedded-uis/custom-ctas"
+      ]
+    },
+    {
+      "group": "Common Use-cases",
+      "pages": [
+        "use-cases/lead-intelligence",
+        "use-cases/sales-prospecting",
+        "use-cases/job-search",
+        "use-cases/talent-sourcing",
+        "use-cases/ats",
+        "use-cases/fundraising"
+      ]
+    },
+    {
+      "group": "Billing",
+      "pages": [
+        "add-upsell"
+      ]
+    },
+     {
+      "group": "Extras",
+      "pages": [
+        "authorization-flow",
+        "user-logout",
+        "custom-extension-sdk",
+        "cross-site-authentication",
+        "custom-team",
+        "custom-paths-everywhere",
+        "whitelabel"
+      ]
+    },
+    {
+      "group": "API Documentation",
+      "pages": [
+        "api-reference/introduction"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "x": "https://x.com/villageHQ",
+    "linkedin": "https://linkedin.com/company/villagehq"
+  }
+}

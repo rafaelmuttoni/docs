@@ -1,0 +1,65 @@
+---
+title: "Custom Extension SDK"
+description: "This SDK allows partners to integrate Village's relationship intelligence features into their own Chrome extensions."
+---
+
+<Steps>
+  <Step title="Install Extension SDK" titleSize="h2">
+    ```markup
+    npm install @villagehq/extension-sdk
+    ```
+  </Step>
+  <Step title="Add to your Extension" titleSize="h2">
+    The SDK provides two main functions:
+
+    ```javascript
+    import Village from "@villagehq/extension-sdk";
+    
+    // Initialize Village service worker
+    Village.initServiceWorker();
+    ```
+
+    ```javascript
+    import Village from "@villagehq/extension-sdk";
+    
+    // Initialize Village content script
+    Village.initContentScript();
+    ```
+  </Step>
+  <Step title="Required permissions" titleSize="h2">
+    Your extension's manifest.json must include the following permissions:
+
+    ```javascript
+        "permissions": [
+          "cookies",
+          "storage",
+          "webRequest",
+          "alarms",
+          "webNavigation"
+        ],
+        "host_permissions": ["*://*.linkedin.com/*", "*://*.village.do/*"],
+        "externally_connectable": {
+          "matches": ["*://*.village.do/*"]
+        }
+        
+      
+    ```
+  </Step>
+  <Step title="Test your extension">
+    Go to the [Platform Admin](https://village.do/platform/settings/features) and add your Extension's ID to verify your integration:
+
+    ![Extension Pn](/images/extension.png)
+  </Step>
+</Steps>
+
+## Cross-Site Authentication
+
+Extensions built with the Village Extension SDK enable seamless authentication across different domains and embedded contexts. This allows users to stay logged in when accessing Village components on third-party websites like job boards or partner platforms.
+
+Learn more about how this works in our detailed [Cross-Site Authentication](/cross-site-authentication) guide.
+
+<AccordionGroup>
+  <Accordion title="My extension integration is not working" defaultOpen="true">
+    If in the Platform Admin you weren't able to verify the communication with your extension, you can go to the console of your extension's service worker and use both `villageExtension.getLogs()` and `villageExtension.enableDebug()` to debug your integration. If you're still facing problems, please contact support at [support@village.do](mailto:support@village.do)
+  </Accordion>
+</AccordionGroup>

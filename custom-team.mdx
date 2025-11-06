@@ -1,0 +1,24 @@
+---
+title: "Custom team invites"
+description: "Integrate Village with your Team Management feature and allow your users to easily share their networks."
+---
+
+<Steps>
+  <Step title="Customize your section" titleSize="h2">
+    Go to the [Platform Admin](https://village.do/platform/settings/features) settings and customize the team sections that will appear on your user's Sync Modal
+
+    ![SCR 20250325 Mtsv Pn](/images/SCR-20250325-mtsv.png)
+  </Step>
+  <Step title="Add to your integration" stepNumber="2" titleSize="h2">
+    Village.identify 2nd parameter is a config object, you can pass "team" with an id and/or name and we'll handle the rest.
+
+    ```javascript
+    Village.identify(USER_ID, {
+      team: {
+        id: TEAM_ID,
+        name: TEAM_NAME,
+      },
+    });
+    ```
+  </Step>
+</Steps>

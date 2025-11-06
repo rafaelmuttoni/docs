@@ -1,0 +1,26 @@
+---
+title: 'Test Find Intro'
+description: 'Description of your new file.'
+---
+
+Hello world new test
+
+<script>
+  {`
+
+  (function(){var w=window;var d=document;var v=w.Village||{};d.head.appendChild(Object.assign(d.createElement("style"),{textContent:'[village-paths-availability="found"],[village-paths-availability="not-found"]{display:none}'}));v.q=v.q||[];v._call=function(method,args){v.q.push([method,args])};v.init=function(){v._call("init",arguments)};v.identify=function(){v._call("identify",arguments)};w.Village=v;var l=function(){var s=d.createElement("script");s.type="text/javascript";s.async=true;s.src="https://js.village.do";var x=d.getElementsByTagName("script")[0];x.parentNode.insertBefore(s,x)};if(w.Village.loaded)return;if(w.attachEvent){w.attachEvent("onload",l)}else{w.addEventListener("load",l,false)}w.Village.loaded=true})();
+    Village.init('pk_zT4HzZn7oV8x7dg7YuCjBEG40AM4Dhzu');
+    Village.identify('USERTEST1');
+  `}
+</script>
+
+<button village-data-url="https://www.google.com">
+  <span village-paths-availability="found">
+    <span village-paths-data="facepiles" />
+
+    <span village-paths-data="count"> paths found</span>
+  </span>
+
+  <span village-paths-availability="not-found">Find an intro</span>
+  <span village-paths-availability="loading">Loading...</span>
+</button>

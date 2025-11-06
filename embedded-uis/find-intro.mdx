@@ -1,28 +1,40 @@
 ---
-title: "⚡ Go live in 10 minutes!"
-description: "Integrate sophisticated relationship intelligence in your app with a few lines of code."
+title: "Find intro button"
+description: "Find intros is the quickest way to offer network features to your users in 1 button."
+icon: "users-viewfinder"
 ---
 
+<Accordion title="Example" defaultOpen={true}>
+  ![](../screenshot-findintro.png)
+</Accordion>
+
 <Steps>
-  <Step title="🛠️ Initiate the Village JS SDK">
+  <Step title="🛠️ Initiate the Village JS SDK" titleSize="h2">
     Copy the snippet below and add it within the `<head>` tag The unique user identifier should be unique - such as an email, or an internal ID. This is required for you to later on be able to cancel users from being added to your upcoming bill.
+
+      To explore the product without syncing a real account, you can use the `demo_pk_global` key. This reduces onboarding friction and allows you to evaluate key features faster. When ready for production, replace it with your real `VILLAGE_PUBLIC_KEY`.
 
     ```javascript
     <script>
      (function(){var w=window;var d=document;var v=w.Village||{};d.head.appendChild(Object.assign(d.createElement("style"),{textContent:'[village-paths-availability="found"],[village-paths-availability="not-found"]{display:none}'}));v.q=v.q||[];v._call=function(method,args){v.q.push([method,args])};v.init=function(){v._call("init",arguments)};v.identify=function(){v._call("identify",arguments)};w.Village=v;var l=function(){var s=d.createElement("script");s.type="text/javascript";s.async=true;s.src="https://js.village.do";var x=d.getElementsByTagName("script")[0];x.parentNode.insertBefore(s,x)};if(w.Village.loaded)return;if(w.attachEvent){w.attachEvent("onload",l)}else{w.addEventListener("load",l,false)}w.Village.loaded=true})();
     	Village.init('VILLAGE_PUBLIC_KEY');
-    	Village.identify('YOUR_UNIQUE_USER_IDENTIFIER')
+        Village.identify('YOUR_UNIQUE_USER_IDENTIFIER'); // Less secure
+      
+        // To explore the product without syncing a real account, you may use the demo key:
+        // Village.init('demo_pk_global');
+       
+    	// Village.authorize('USER_TOKEN'); Coming soon
     </script>
     ```
   </Step>
 
-  <Step title="✨ Add the “Find intro” button">
+  <Step title="✨ Add the “Find intro” button" titleSize="h2">
     Add `village-data-url` attribute to any html element, and Village automatically adds an onclick event that triggers the paths experience. If the user hasn’t synced their connections yet, they’ll be prompted to authorize Village and then sync their connections.
 
     ```markup
     <!-- FINDS PATHS TO A PERSON OR COMPANY -->
     <!-- URL could be a person's linkedin URL, a company URL, or a LinkedIn company page -->
-    <button village-data-url="https://google.com">
+    <button village-data-url="https://www.linkedin.com/company/google">
       <!-- Change button contents depending on found paths -->
     	<span village-paths-availability="found">
     		<!-- Auto-populate faces of introducers inside this -->
@@ -38,3 +50,14 @@ description: "Integrate sophisticated relationship intelligence in your app with
 
   <Step title="🎉 Go live!" />
 </Steps>
+
+### Conditions
+
+* **If user hasn't set up their network yet**
+  User is shown the [sync network](/sync-network) modal so they sync their connections first
+
+* **If no path was found to a specific person or company**
+  User is shown the [sync network](/sync-network) modal so they can add more accounts
+
+* **If more than one path was found**&#x20;
+  The [browse paths](/browse-paths) modal experience will show up.&#x20;

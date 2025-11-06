@@ -1,0 +1,21 @@
+---
+title: "Cross-Site Authentication"
+description: "Using the extension, Village supports cross-site authorization for seamless login experiences across domains and embedded contexts."
+---
+
+## Authentication Flow Priority
+
+When a user interacts with Village components, the system attempts authentication in this order:
+
+### 1. Local Cookie Check
+- If on `village.do` or any partner website, the `village.token` cookie is directly available
+- No additional steps needed - authentication is immediate
+
+### 2. Browser Extension Cookie Retrieval
+- For embedded contexts, your custom extension using the Village Extension SDK provides cookie access
+- The extension reads the `village.token` from the `village.do` domain and shares it securely
+- Works seamlessly across any third-party website where Village components are embedded
+
+## Technical Implementation
+
+Your custom extension built with the [Village Extension SDK](https://www.npmjs.com/package/@villagehq/extension-sdk) enables cross-site authentication by default starting from version **0.1.22**

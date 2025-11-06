@@ -1,0 +1,53 @@
+---
+title: "Authorization flow for Embedded UIs"
+description: "The authorization flow provides a secure way to ensure that only users verified by your app can join the network as provisioned users. "
+---
+
+<Steps>
+  <Step title="Enable secure mode" titleSize="h2">
+    Reach out to Village support to activate secure mode and enforce a more robust authentication flow, ensuring only verified users can integrate with Village.
+
+    <Warning>
+      By enabling secure mode, identifying users without an authorization token will be immediately deprecated. Ensure your integration is updated to authenticate users exclusively via tokens to maintain compatibility.
+    </Warning>
+  </Step>
+  <Step title="Generate a token to authorize the user" titleSize="h2">
+    In your server, send a request to the Village API to create a token to authorize the user. Check the [API Reference](https://docs.village.do/api-reference/provisioned-users/create-authorization) for more details.
+
+    ```bash
+    curl --request POST \
+      --url https://api.village.do/v1/users/authorization \
+      --header 'Content-Type: application/json' \
+      --header 'secret-key: <api-key>' \
+      --header 'user-identifier: YOUR_UNIQUE_USER_IDENTIFIER' \
+      --data '{
+      "email": "email@example.com"
+    }'
+    ```
+
+    <Info>
+      Generating an authorization token does not automatically provision a new user or impact billing. A user is only added as a provisioned user once they initiate their network sync.
+    </Info>
+  </Step>
+  <Step title="Initialize the SDK" titleSize="h2">
+    Copy the snippet below to add the Village SDK to your application. You should use the generate token from the previous step.
+
+    ```javascript
+    <script>
+     (function(){var w=window;var d=document;var v=w.Village||{};d.head.appendChild(Object.assign(d.createElement("style"),{textContent:'[village-paths-availability="found"],[village-paths-availability="not-found"]{display:none}'}));v.q=v.q||[];v._call=function(method,args){v.q.push([method,args])};v.init=function(){v._call("init",arguments)};v.authorize=function(){v._call("authorize",arguments)};w.Village=v;var l=function(){var s=d.createElement("script");s.type="text/javascript";s.async=true;s.src="https://js.village.do";var x=d.getElementsByTagName("script")[0];x.parentNode.insertBefore(s,x)};if(w.Village.loaded)return;if(w.attachEvent){w.attachEvent("onload",l)}else{w.addEventListener("load",l,false)}w.Village.loaded=true})();
+    	Village.init('VILLAGE_PUBLIC_KEY');
+    	Village.authorize('GENERATED_TOKEN');
+    </script>
+    ```
+  </Step>
+  <Step title="🎉 Go live!">
+    
+  </Step>
+</Steps>
+
+
+<AccordionGroup>
+  <Accordion title="How to invalidate a token" defaultOpen={true}>
+   When a [subscription is canceled](/api-reference/provisioned-users/cancel-subscription) the tokens are automatically invalidated.
+  </Accordion>
+</AccordionGroup>

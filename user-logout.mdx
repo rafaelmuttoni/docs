@@ -1,0 +1,24 @@
+---
+title: "Logout"
+description: "Log users out of their Village session."
+---
+
+## Overview
+
+The `Village.logout()` function allows you to programmatically end the user's current session with Village directly from your application. This is useful when a user logs out of your main application and you want to ensure their Village session is cleared as well.
+
+## Usage
+
+Simply call the logout function directly with `Village`:
+
+```javascript
+// Example: Call Village logout when the user logs out of your application
+function handleYourAppLogout() {
+  // Your application's logout logic...
+
+  // Village Logout
+  Village.logout()
+}
+```
+
+This ensures that the user's connection data is no longer active within the widget on your site after they log out.

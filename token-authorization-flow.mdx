@@ -1,0 +1,147 @@
+---
+title: "Token-Based Authorization Implementation Guide"
+description: "Implement secure, cross-site authentication with browser extension support and automatic token management."
+---
+
+<Warning>
+  This feature is **coming soon**. The implementation guide below outlines the planned token-based authorization system.
+</Warning>
+
+## Quick Start
+
+Token-based authorization eliminates repeated login prompts by maintaining secure authentication state across browsers, websites, and browser extensions. Instead of relying on cookies, the system uses JWT tokens that are automatically synchronized between your website and the Village browser extension.
+
+<Steps>
+  <Step title="Enable Secure Mode">
+    <Info>
+    Contact Village support to enable Secure Mode for enhanced security. In Secure Mode, domain parameters become mandatory for token operations.
+    </Info>
+  </Step>
+
+  <Step title="Generate User Tokens">
+    Create authorization tokens for your users on your backend:
+
+    ```bash
+    curl --request POST \
+      --url https://api.village.do/v1/users/authorization \
+      --header 'Content-Type: application/json' \
+      --header 'secret-key: <api-key>' \
+      --header 'user-identifier: YOUR_UNIQUE_USER_IDENTIFIER' \
+      --data '{
+      "email": "email@example.com"
+    }'
+    ```
+
+    <Info>
+    Creating a token does not provision or bill a user. Provisioning happens only when the user initiates a network sync.
+    </Info>
+  </Step>
+
+  <Step title="Initialize SDK with Token">
+    ### Implementation
+
+    ```html
+    <script>
+     (function(){var w=window;var d=document;var v=w.Village||{};d.head.appendChild(Object.assign(d.createElement("style"),{textContent:'[village-paths-availability="found"],[village-paths-availability="not-found"]{display:none}'}));v.q=v.q||[];v._call=function(m,a){v.q.push([m,a])};v.init=function(){v._call("init",arguments)};v.authorize=function(){v._call("authorize",arguments)};w.Village=v;var l=function(){var s=d.createElement("script");s.type="text/javascript";s.async=true;s.src="https://js.village.do";var x=d.getElementsByTagName("script")[0];x.parentNode.insertBefore(s,x)};if(w.Village.loaded)return;if(w.attachEvent){w.attachEvent("onload",l)}else{w.addEventListener("load",l,false)}w.Village.loaded=true})();
+
+     Village.init('VILLAGE_PUBLIC_KEY');
+
+     // Optional: callback function to handle token refresh
+     function handleTokenRefresh() {
+       return fetch('/api/refresh-village-token')
+         .then(r => r.json())
+         .then(data => Village.authorize(data.token, 'your-domain.com'));
+     }
+
+     // In Secure Mode, domain is mandatory
+     Village.authorize('USER_GENERATED_TOKEN', 'your-domain.com', handleTokenRefresh)
+       .then(({ ok, status, reason }) => {
+         if (ok) {
+           console.log('Authorization successful');
+         } else {
+           console.error('Authorization failed:', reason);
+         }
+       })
+       .catch(err => {
+         console.error('Village auth error', err);
+       });
+    </script>
+    ```
+  </Step>
+</Steps>
+
+## How It Works
+
+### Authentication Flow by Scenario
+
+#### On Your Main Website
+
+1. **User logs into your app** → Your backend generates Village token
+2. **Frontend initializes Village SDK** with the token
+3. **If extension is installed** → Token automatically synced to extension storage
+4. **Future visits** → Automatic authentication using stored token
+
+## Embeds and Authorization
+
+Village embeds automatically handle token-based authentication. When you initialize the SDK with a token, all Village embeds on your website will use that token for authentication.
+
+<Info>
+If a user is not provisioned or has a cancelled subscription, the authorization popup will appear after any interaction with the embeds, allowing them to complete the authorization process.
+</Info>
+
+## SDK Methods
+
+### `Village.authorize(token, domain?, refreshCallback?)`
+
+**Purpose**: Authenticate users with token-based authorization
+
+**Parameters:**
+- `token` (string, required): JWT token from your backend
+- `domain` (string, required): Required in Secure Mode
+- `refreshCallback` (function, optional): Custom token refresh handler
+
+**Example Usage:**
+```javascript
+// Basic usage with domain
+Village.authorize('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...', 'myapp.com');
+
+// With refresh callback
+Village.authorize('token', 'myapp.com', () => {
+  return fetch('/refresh-token').then(r => r.json());
+});
+```
+
+**Response:**
+```typescript
+{
+  ok: boolean,                    // Success status
+  status: 'authorized' | 'unauthorized' | 'not-provisioned',
+  reason?: string,               // Error reason if ok: false
+  domain?: string,               // Authorized domain
+  expiresAt?: number            // Token expiration timestamp
+}
+```
+
+## Token Management
+
+### Token Revocation
+
+To revoke a user's authorization token, use the revoke endpoint:
+
+```bash
+curl --request POST \
+  --url https://api.village.do/v1/users/revoke \
+  --header 'Content-Type: application/json' \
+  --header 'secret-key: <api-key>' \
+  --header 'user-identifier: YOUR_UNIQUE_USER_IDENTIFIER'
+```
+
+<Info>
+When a user's subscription is cancelled or they are not provisioned yet, their authorization tokens are automatically revoked. If they interact with Village embeds, the authorization popup will appear, allowing them to get provisioned or re-activate their subscription.
+</Info>
+
+---
+
+<Note>
+This token-based authorization system is currently in development. For current implementation, see the [existing authorization flow](/authorization-flow) documentation.
+</Note>

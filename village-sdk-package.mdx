@@ -1,0 +1,230 @@
+---
+title: "SDK NPM Package"
+---
+
+## Overview
+
+This guide shows how to implement the **Village SDK as an importable ES module**, eliminating CSP issues and enabling compatibility across all JavaScript environments including browser extensions, web applications, and modern bundlers.
+
+<Steps>
+  <Step title="Install Village SDK" titleSize="h2">
+    Install the Village SDK npm package:
+
+    ```bash
+    npm install @village/sdk
+    ```
+
+  </Step>
+
+  <Step title="Import the Village SDK" titleSize="h2">
+    Import the Village SDK as an ES module in your JavaScript files:
+
+    ```javascript
+    // Standard ES module import
+    import Village from '@village/sdk';
+    
+    // Or using dynamic import
+    const Village = await import('@village/sdk');
+    
+    // Or CommonJS (if needed)
+    const Village = require('@village/sdk');
+    ```
+
+    TypeScript support is included automatically with full type definitions.
+  </Step>
+
+  <Step title="Initialize Village SDK" titleSize="h2">
+    <Tabs>
+      <Tab title="Basic Usage">
+        ```javascript
+        // Import and initialize Village SDK
+        import Village from '@village/sdk';
+        
+        async function initVillage() {
+          try {
+            // Initialize with your public key
+            Village.init('your_public_key');
+            
+            // Authorize user with token from your backend
+            const token = await getTokenFromYourBackend();
+            
+            // Optional: callback function to handle token refresh
+            function handleTokenRefresh() {
+              return fetch('/api/refresh-village-token')
+                .then(r => r.json())
+                .then(data => data.token);
+            }
+            
+            // Authorize with domain and optional refresh callback
+            const result = await Village.authorize(token, 'your-domain.com', handleTokenRefresh);
+            
+            if (result.ok) {
+              console.log('✅ Village SDK authorized successfully!');
+            } else {
+              console.error('Authorization failed:', result.reason);
+            }
+            
+            // Make available globally for HTML attributes
+            window.Village = Village;
+            
+          } catch (error) {
+            console.error('Village initialization failed:', error);
+          }
+        }
+        
+        document.addEventListener('DOMContentLoaded', initVillage);
+        ```
+      </Tab>
+      <Tab title="Frameworks">
+        ```javascript
+        // In React, Vue, or other modern frameworks
+        import { useEffect } from 'react';
+        import Village from '@village/sdk';
+        
+        function App() {
+          useEffect(() => {
+            async function initVillage() {
+              try {
+                Village.init('your_public_key');
+                
+                // Get token from your backend
+                const token = await fetch('/api/village-token').then(r => r.json());
+                
+                // Authorize with domain and optional refresh callback
+                const result = await Village.authorize(
+                  token.access_token, 
+                  'your-domain.com',
+                  () => fetch('/api/refresh-village-token').then(r => r.json()).then(d => d.token)
+                );
+                
+                if (result.ok) {
+                  console.log('Village authorized for domain:', result.domain);
+                }
+                
+                // Make globally available for HTML attributes
+                window.Village = Village;
+              } catch (error) {
+                console.error('Village initialization failed:', error);
+              }
+            }
+            
+            initVillage();
+          }, []);
+          
+          return (
+            <div>
+              {/* Your Village components */}
+            </div>
+          );
+        }
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step title="Add Village Components" titleSize="h2">
+    ### Intro Buttons with Facepiles
+
+    Create intro buttons that show connection facepiles and path counts:
+
+    ```html
+    <button village-data-url="https://www.linkedin.com/in/someone">
+      <!-- When paths are found -->
+      <span village-paths-availability="found" style="display: inline-flex; align-items: center;">
+        <span village-paths-data="facepiles" style="display: flex; margin-right: 6px;"></span>
+        <span village-paths-data="count"></span>
+        <span>paths found →</span>
+      </span>
+      
+      <!-- When no paths found -->
+      <span village-paths-availability="not-found">
+        Get Intro →
+      </span>
+      
+      <!-- Loading state -->
+      <span village-paths-availability="loading" style="display: inline-flex; align-items: center;">
+        <svg style="width: 12px; height: 12px; margin-right: 4px; animation: spin 1s linear infinite;" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity="0.25"></circle>
+          <path fill="currentColor" opacity="0.75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Loading...
+      </span>
+    </button>
+    ```
+
+    ### Paths Widgets
+
+    ```html
+    <div village-module="paths" village-data-url="https://www.linkedin.com/company/google">
+      <div village-paths-availability="found">
+        <span village-paths-data="facepiles"></span>
+        <span village-paths-data="count"></span> paths available
+        <p>Click to view connection paths</p>
+      </div>
+      <div village-paths-availability="not-found">
+        <p>No paths found</p>
+        <p>Click to sync more connections</p>
+      </div>
+      <div village-paths-availability="loading">
+        Checking paths...
+      </div>
+    </div>
+    ```
+
+    ### Sync Network Button
+
+    ```html
+    <button village-module="sync">
+      🔄 Sync Network
+    </button>
+    ```
+  </Step>
+
+  <Step title="Add CSS Styling" titleSize="h2">
+    ### Facepiles Styling
+
+    ```css
+    /* Facepiles - overlapping profile pictures */
+    [village-paths-data="facepiles"] {
+      display: inline-flex !important;
+      margin-right: 6px;
+    }
+
+    [village-paths-data="facepiles"] img {
+      width: 20px !important;
+      height: 20px !important;
+      border-radius: 50% !important;
+      border: 2px solid white !important;
+      margin-left: -4px !important;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    [village-paths-data="facepiles"] img:first-child {
+      margin-left: 0 !important;
+    }
+    ```
+
+    ### Loading Animation
+
+    ```css
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Village element states */
+    [village-paths-availability="found"] {
+      display: inline-flex !important;
+      align-items: center !important;
+    }
+
+    [village-paths-availability="not-found"] {
+      display: inline-flex !important;
+    }
+
+    [village-paths-availability="loading"] {
+      display: none !important;
+    }
+    ```
+  </Step>
+</Steps>

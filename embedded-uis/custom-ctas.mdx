@@ -1,0 +1,166 @@
+---
+title: "Custom CTAs"
+description: "Render action buttons inside the widget that trigger logic in your app."
+icon: "bullseye-pointer"
+---
+
+Custom CTAs (Call-To-Actions) let you add buttons inside the Village widget that trigger logic in your platform. This allows users to take actions — like saving a contact, opening a modal, or sending a message — directly from within the widget interface.
+
+CTAs are configured via the `paths_cta` array passed during widget initialization.
+
+## Defining Custom CTAs
+
+Each CTA includes:
+
+- `label`: The text shown on the button  
+- `callback`: A function executed when the button is clicked  
+- `style` *(optional)*: Custom styling for the button
+
+```js
+Village.init('YOUR_PUBLIC_KEY', {
+  paths_cta: [
+    {
+      label: 'Save to CRM',
+      callback() {
+        alert('Record saved to CRM!');
+      },
+      style: {
+        backgroundColor: '#007bff',
+        color: '#fff'
+      }
+    },
+    {
+      label: 'Trigger alert',
+      callback: () => alert('Hello from Village!'),
+      style: {
+        backgroundColor: '#dc3545',
+        color: '#fff'
+      }
+    }
+  ]
+});
+```
+
+> The `callback` function is always executed in your application environment, not inside the widget. This gives you full control to run custom logic securely on your side.
+
+---
+
+## CTA Object Format
+
+```ts
+{
+  label: string;            // Required — Text shown on the button
+  callback: Function;       // Required — Executed when the CTA is clicked
+  style?: object;           // Optional — Button styling (CSS-style object)
+}
+```
+
+---
+
+## Advanced Usage (Optional)
+
+If you want to observe CTA clicks across contexts (e.g. in iframes) or for analytics/automation purposes, you can listen to CTA events using the SDK or browser-level messaging.
+
+### Option 1: Using `Village.on()`
+
+```js
+Village.on('village.path.cta.clicked', ({ index, cta, context }) => {
+  console.log('CTA clicked:', cta.label, context);
+});
+```
+
+### Option 2: Listening to PostMessage
+
+```js
+window.addEventListener("message", (event) => {
+  const msg = event.data;
+  if (!msg || !(msg.source === "VillageSDK" || msg.source === "dynamic-cta")) return;
+
+  if (msg.type === 'village.path.cta.clicked') {
+    console.log('CTA clicked via message event:', msg);
+  }
+});
+```
+
+### Example Payload
+
+> This is a sample payload received when a CTA is clicked. All names and URLs are fictional and provided for demonstration purposes only.
+
+```json
+{
+  "source": "dynamic-cta",
+  "type": "village.path.cta.clicked",
+  "index": 0,
+  "cta": {
+    "label": "Default button no style"
+  },
+  "context": {
+    "from": "PathsConnection",
+    "path": {
+      "start_person": {
+        "avatar": "https://cdn.village.do/l-janesmith.jpg",
+        "first_name": "Jane",
+        "last_name": "Smith",
+        "full_name": "Jane Smith",
+        "id": "12345678-aaaa-bbbb-cccc-1234567890ab",
+        "identity_id": "12345678-aaaa-bbbb-cccc-1234567890ab",
+        "linkedin_identifier": "janesmith-dev",
+        "linkedin_url": "https://linkedin.com/in/janesmith-dev",
+        "summary": "Full-Stack Engineer at Example Corp.",
+        "village_person_url": "https://village.do/people/profile/sample-jane"
+      },
+      "start_connector_warmth_score": 16.2,
+      "connector_person": {
+        "avatar": "https://cdn.village.do/l-alexjohnson.jpg",
+        "first_name": "Alex",
+        "last_name": "Johnson",
+        "full_name": "Alex Johnson",
+        "id": "23456789-bbbb-cccc-dddd-2345678901bc",
+        "identity_id": "23456789-bbbb-cccc-dddd-2345678901bc",
+        "linkedin_identifier": "alexjohnson-link",
+        "linkedin_url": "https://linkedin.com/in/alexjohnson-link",
+        "summary": "Product Lead, ex-StartupX",
+        "village_person_url": "https://village.do/people/profile/sample-alex"
+      },
+      "connector_end_warmth_score": 3.7,
+      "end_person": {
+        "avatar": "https://cdn.village.do/l-chrislee.jpg",
+        "first_name": "Chris",
+        "last_name": "Lee",
+        "full_name": "Chris Lee",
+        "id": "34567890-cccc-dddd-eeee-3456789012cd",
+        "identity_id": "34567890-cccc-dddd-eeee-3456789012cd",
+        "linkedin_identifier": "chrislee-example",
+        "linkedin_url": "https://linkedin.com/in/chrislee-example",
+        "village_person_url": "https://village.do/people/profile/sample-chris"
+      },
+      "start_end_warmth_score": 3.7,
+      "type": "second_degree",
+      "paid_intro": null,
+      "group_type": null
+    },
+    "partnerDomain": "findfunding.vc"
+  }
+}
+
+```
+
+This payload provides full context of the clicked path, which you can optionally use for logging, custom tracking, or integrations. This is not required for standard CTA usage.
+
+---
+
+## Events Reference
+
+| Event Name                  | Description                      | Payload                   |
+| --------------------------- | -------------------------------- | ------------------------- |
+| `village.widget.ready`      | Widget is initialized            | —                         |
+| `village.path.cta.clicked`  | CTA was clicked                  | `{ index, cta, context }` |
+| `village.paths_cta.updated` | CTA list was dynamically updated | `PathCTA[]`               |
+
+---
+
+### Related Documentation
+
+- [Quickstart](https://docs.village.do/quickstart)
+- [Find Integration Guide](https://docs.village.do/embedded-uis/find-intro)
+- [Browse Paths](https://docs.village.do/embedded-uis/browse-paths)

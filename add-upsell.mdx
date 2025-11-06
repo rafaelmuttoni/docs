@@ -1,0 +1,38 @@
+---
+title: "Add Village as an upsell"
+---
+
+<Steps>
+  <Step title="Add button that triggers the paywall" titleSize="h3">
+    This button would ideally be "Find intro" or something similar.
+    When the user clicks it, it should trigger your paywall experience if they haven't upgraded yet.
+
+
+  </Step>
+
+  <Step title="Show Village &#x22;Find intro&#x22; once they upgrade" titleSize="h3">
+    Embed the [Find intro](/embedded-uis/find-intro) button after users upgrade so Village can sync their network.
+
+    <Info>
+      A paid provisioned user is created when the user tries to connect their accounts for the first time, not when you identify them through your app.
+    </Info>
+
+
+  </Step>
+
+  <Step title="Cancel a user's seat when they downgrade" titleSize="h3">
+    If you offer Village relationship intelligence as an added benefit only to premium users on your product, then use this webhook to automatically cancel users who downgrade their subscription.
+
+    ```bash
+    curl --request POST \\
+      --url '<https://api.village.do/v1/users/:YOUR_UNIQUE_USER_IDENTIFIER/cancel>' \\
+      --header 'Accept: application/json' \\
+      --header 'Content-Type: application/json' \\
+      --header 'X-Village-Secret-Key: VILLAGE_SECRET_KEY'
+    ```
+
+
+
+
+  </Step>
+</Steps>
