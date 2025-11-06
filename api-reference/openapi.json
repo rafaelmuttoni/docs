@@ -48,7 +48,7 @@
       "post": {
         "tags": ["Authentication"],
         "summary": "Generate User Token",
-        "description": "Partners use this endpoint to generate access tokens for their users. The token allows the partner's application to make API requests on behalf of the user.\n\n**Authentication**: Requires Partner API Key in `X-API-Key` header.",
+        "description": "Partners use this endpoint to generate access tokens for their users. The token allows the partner's application to make API requests on behalf of the user.\n\n**Authentication**: Requires Partner API Key in `secret-key` header.",
         "operationId": "generateUserToken",
         "security": [
           {
@@ -142,7 +142,7 @@
     "/people/paths": {
       "post": {
         "tags": ["People"],
-        "summary": "Get Connection Paths to Person",
+        "summary": "Paths",
         "description": "Retrieve connection paths from the authenticated user to a target person. Returns up to 10 paths ordered by warmth score (strongest connections first).\n\n**Accepted URL formats:**\n- LinkedIn profile URL: `https://linkedin.com/in/johndoe`\n- Village person ID: `person_abc123` (from search results)",
         "operationId": "getPersonPaths",
         "requestBody": {
@@ -231,7 +231,7 @@
     "/people/search": {
       "post": {
         "tags": ["People"],
-        "summary": "Search People",
+        "summary": "Search",
         "description": "Search for people in the user's network using natural language queries and filters. Results are ranked by relevance and include warmth scores for each person.\n\nSupports cursor-based pagination for large result sets.",
         "operationId": "searchPeople",
         "requestBody": {
@@ -313,154 +313,10 @@
         }
       }
     },
-    "/people/batch/paths": {
-      "post": {
-        "tags": ["People"],
-        "summary": "Batch Get Connection Paths",
-        "description": "Get connection paths to multiple people in a single request. Maximum of 50 people per request.\n\nResults include individual error handling - if one person fails, others still return successfully.\n\n**Accepts mixed identifiers** - LinkedIn URLs, person IDs, or any combination.",
-        "operationId": "batchGetPersonPaths",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BatchPathsRequest"
-              },
-              "examples": {
-                "mixed_identifiers": {
-                  "summary": "Mix of URLs and IDs",
-                  "value": {
-                    "urls": [
-                      "https://linkedin.com/in/johndoe",
-                      "person_def456",
-                      "https://linkedin.com/in/janesmith"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Batch paths retrieved (check individual results for errors)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/SuccessResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "type": "array",
-                          "items": {
-                            "$ref": "#/components/schemas/BatchPathResult"
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimitError"
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalError"
-          }
-        }
-      }
-    },
-    "/people/sort": {
-      "post": {
-        "tags": ["People"],
-        "summary": "Sort People by Warmth",
-        "description": "Sort a list of people by their relationship strength (warmth score) with the authenticated user. Returns the same list ordered by warmth score (highest to lowest).\n\nMaximum of 100 people per request.\n\n**Accepts mixed identifiers** - LinkedIn URLs, person IDs, or any combination.",
-        "operationId": "sortPeople",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SortPeopleRequest"
-              },
-              "examples": {
-                "mixed_identifiers": {
-                  "summary": "Mix of URLs and IDs",
-                  "value": {
-                    "urls": [
-                      "https://linkedin.com/in/alicebrown",
-                      "person_abc123",
-                      "https://linkedin.com/in/janesmith"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "People sorted successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/SuccessResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "type": "array",
-                          "items": {
-                            "$ref": "#/components/schemas/PersonWarmthScore"
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimitError"
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalError"
-          }
-        }
-      }
-    },
     "/companies/paths": {
       "post": {
         "tags": ["Companies"],
-        "summary": "Get Connection Paths to Company",
+        "summary": "Paths",
         "description": "Retrieve connection paths to employees at a target company. Returns up to 50 employees with the strongest connections, each with their introducers.\n\n**Accepted URL formats:**\n- Company domain: `acme.com`\n- LinkedIn company page: `https://linkedin.com/company/acme`\n- Village company ID: `company_xyz789` (from search results)",
         "operationId": "getCompanyPaths",
         "requestBody": {
@@ -560,7 +416,7 @@
     "/companies/search": {
       "post": {
         "tags": ["Companies"],
-        "summary": "Search Companies",
+        "summary": "Search",
         "description": "Search for companies in the user's network using natural language queries and filters. Results include warmth scores indicating connection strength to the company.",
         "operationId": "searchCompanies",
         "requestBody": {
@@ -642,210 +498,6 @@
           }
         }
       }
-    },
-    "/companies/batch/paths": {
-      "post": {
-        "tags": ["Companies"],
-        "summary": "Batch Get Company Connection Paths",
-        "description": "Get connection paths to multiple companies in a single request. Maximum of 20 companies per request.\n\n**Accepts mixed identifiers** - domains, LinkedIn URLs, company IDs, or any combination.",
-        "operationId": "batchGetCompanyPaths",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BatchCompanyPathsRequest"
-              },
-              "examples": {
-                "mixed_identifiers": {
-                  "summary": "Mix of domains, URLs, and IDs",
-                  "value": {
-                    "urls": [
-                      "acme.com",
-                      "https://linkedin.com/company/techstart",
-                      "company_bbb222"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Batch company paths retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/SuccessResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "type": "array",
-                          "items": {
-                            "$ref": "#/components/schemas/BatchCompanyPathResult"
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimitError"
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalError"
-          }
-        }
-      }
-    },
-    "/companies/sort": {
-      "post": {
-        "tags": ["Companies"],
-        "summary": "Sort Companies by Warmth",
-        "description": "Sort a list of companies by connection strength (warmth score) with the authenticated user. Maximum of 100 companies per request.\n\n**Accepts mixed identifiers** - domains, LinkedIn URLs, company IDs, or any combination.",
-        "operationId": "sortCompanies",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SortCompaniesRequest"
-              },
-              "examples": {
-                "mixed_identifiers": {
-                  "summary": "Mix of domains, URLs, and IDs",
-                  "value": {
-                    "urls": [
-                      "acme.com",
-                      "https://linkedin.com/company/techstart",
-                      "company_bbb222"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Companies sorted successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/SuccessResponse"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "type": "array",
-                          "items": {
-                            "$ref": "#/components/schemas/CompanyWarmthScore"
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "403": {
-            "$ref": "#/components/responses/ForbiddenError"
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimitError"
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalError"
-          }
-        }
-      }
-    },
-    "/health": {
-      "get": {
-        "tags": ["Health"],
-        "summary": "API Health Check",
-        "description": "Check the health and status of the API. This endpoint does not require authentication.",
-        "operationId": "getHealth",
-        "security": [],
-        "responses": {
-          "200": {
-            "description": "API is healthy",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": ["status", "version", "timestamp"],
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "enum": ["healthy"]
-                    },
-                    "version": {
-                      "type": "string",
-                      "example": "2.0.0"
-                    },
-                    "timestamp": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  }
-                },
-                "example": {
-                  "status": "healthy",
-                  "version": "2.0.0",
-                  "timestamp": "2024-01-06T12:00:00Z"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "API is unhealthy",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "enum": ["unhealthy"]
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -853,7 +505,7 @@
       "ApiKeyAuth": {
         "type": "apiKey",
         "in": "header",
-        "name": "X-API-Key",
+        "name": "secret-key",
         "description": "Partner API Key for generating user tokens"
       },
       "BearerAuth": {
