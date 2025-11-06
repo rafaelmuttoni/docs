@@ -1,3 +1,5 @@
+# Public API V2 - Design Proposal
+
 ## Design Principles & Decisions
 
 ### 1. Standardized Response Envelopes
@@ -9,18 +11,17 @@
 ```json
 {
   "data": { ... },
-  "metadata": { ... },// Optional, might be worth to consider extra debuggging info like request_id
-  "pagination": {  // Optional, only for paginated endpoints
+  "metadata": { ... }, // Optional, might be worth to consider adding extra debuggging info like request_id
+  "pagination": {  // Only for paginated endpoints
     "cursor": "eyJ...",
     "has_more": true,
     "count": 20
   }
 }
+
 ```
 
-### 2. Consistent snake_case Naming
-
-**Decision**: All JSON properties use `snake_case`.
+### 2. Consistent snake_case
 
 **Why**:
 
@@ -37,12 +38,13 @@
   "image_url": "https://...",
   "position": { ... }
 }
+
 ```
 
 ### 3. POST Instead of GET for Paths
 
-**V1**: `GET /people/paths/{url}` (URL-encoded LinkedIn URL in path)
-**V2**: `POST /people/paths` with body
+- **V1**: `GET /people/paths/{url}` (URL-encoded in path)
+- **V2**: `POST /people/paths` with body
 
 **Why**:
 
@@ -55,14 +57,20 @@
 ```bash
 POST /v2/people/paths
 {
-  "url": "https://linkedin.com/in/johndoe",
+  "url": "<https://linkedin.com/in/johndoe>",
   "limit": 5
 }
+
 ```
 
 ### 4. Flexible Identifiers (Single `url` Parameter)
 
-**🚨 STILL NOT 100% ON THIS ONE**: need to consider if we want to support IDs etc, if we want a fully generic endpoint `identifier` might be better
+<aside>
+
+**🚨 STILL NOT 100% ON THIS ONE**
+
+- need to consider if we want to support IDs etc, if we want a fully generic endpoint `identifier` might be better
+</aside>
 
 **Decision**: Accept LinkedIn URLs, domains in a single `url` field.
 
@@ -76,13 +84,14 @@ POST /v2/people/paths
 
 ```json
 // LinkedIn profile URL
-{"url": "https://linkedin.com/in/johndoe"}
+{"url": "<https://linkedin.com/in/johndoe>"}
 
 // Company domain
 {"url": "acme.com"}
 
 // LinkedIn company URL
-{"url": "https://linkedin.com/company/acme"}
+{"url": "<https://linkedin.com/company/acme>"}
+
 ```
 
 ### 5. Cursor-Based Pagination
@@ -106,6 +115,7 @@ POST /v2/people/paths
     "count": 20
   }
 }
+
 ```
 
 ### 6. RFC 7807 Error Format
@@ -114,7 +124,7 @@ POST /v2/people/paths
 
 **Why**:
 
-- ✅ Industry standard (IETF spec)
+- ✅ Industry standard
 - ✅ Machine-readable error types
 - ✅ Human-readable messages
 - ✅ Consistent error structure
@@ -144,33 +154,91 @@ POST /v2/people/paths
 }
 ```
 
----
-
 ## API Endpoints Overview
 
-### V2 Endpoints
+<aside>
 
-| Endpoint                 | Method | Description                      | V1 Equivalent                |
-| ------------------------ | ------ | -------------------------------- | ---------------------------- |
-| `/auth/token`            | POST   | Generate user access token       | ❌ New                       |
-| `/people/paths`          | POST   | Get connection paths to a person | `GET /people/paths/{url}`    |
-| `/people/search`         | POST   | Search for people                | `POST /people/search`        |
-| `/people/sort`           | POST   | Sort people by warmth            | `POST /people/sort`          |
-| `/companies/paths`       | POST   | Get connection paths to company  | `GET /companies/paths/{url}` |
-| `/companies/search`      | POST   | Search for companies             | `POST /companies/search`     |
-| `/companies/batch/paths` | POST   | Get paths to multiple companies  | ❌ New                       |
-| `/companies/sort`        | POST   | Sort companies by warmth         | `POST /companies/sort`       |
-| `/health`                | GET    | Health check                     | ❌ New                       |
+ℹ️ Some endpoints are not mentioned here, such as lists, they should follow same structure proposed in **Design Principles & Decisions**
+
+</aside>
+
+### Authentication Endpoints
+
+| Endpoint       | Method | Description                | V1 Equivalent |
+| -------------- | ------ | -------------------------- | ------------- |
+| `/auth/tokens` | POST   | Generate user access token | ❌ New        |
+
+### User Endpoints
+
+| Endpoint             | Method | Description                                    | V1 Equivalent |
+| -------------------- | ------ | ---------------------------------------------- | ------------- |
+| `/user`              | GET    | Get current user profile and status            | ❌ New        |
+| `/user/integrations` | GET    | List connected integrations (Google, LinkedIn) | ❌ New        |
+
+**User Endpoints Details:**
+
+**GET /user** - Returns authenticated user's profile and status:
+
+```json
+{
+  "data": {
+    "id": "user_abc123",
+    "email": "john@example.com",
+    "name": "John Doe",
+    "created_at": "2024-01-01T00:00:00Z",
+    "is_sync_complete": true,
+    "is_active": true // check app_user active field
+  },
+  "meta": { ... }
+}
+
+```
+
+**GET /user/integrations** - Returns connected integrations:
+
+```json
+{
+  "data": {
+    "integrations": [
+      {
+        "type": "google",
+        "is_sync_complete": true,
+      },
+      {
+        "type": "linkedin",
+        "is_sync_complete": true,
+      }
+    ]
+  },
+  "meta": { ... }
+}
+
+```
+
+### People Endpoints
+
+| Endpoint         | Method | Description                      | V1 Equivalent         |
+| ---------------- | ------ | -------------------------------- | --------------------- |
+| `/people/paths`  | POST   | Get connection paths to a person | `GET /people/paths`   |
+| `/people/search` | POST   | Search for people                | `POST /people/search` |
+| `/people/sort`   | POST   | Sort people by warmth            | `POST /people/sort`   |
+
+### Companies Endpoints
+
+| Endpoint            | Method | Description                     | V1 Equivalent                |
+| ------------------- | ------ | ------------------------------- | ---------------------------- |
+| `/companies/paths`  | POST   | Get connection paths to company | `GET /companies/paths/{url}` |
+| `/companies/search` | POST   | Search for companies            | `POST /companies/search`     |
+| `/companies/sort`   | POST   | Sort companies by warmth        | `POST /companies/sort`       |
 
 ### Key Differences from V1
 
 1. **All paths/sort endpoints are POST** (not GET)
-2. **New `/auth/tokens` endpoint** for partner-generated tokens
-3. **New batch endpoints** for bulk operations
-4. **Identifiers in request body** (not URL path)
+2. **New authentication endpoint as a starting point** (`/auth/tokens`)
+3. **New user endpoints** (`/user/me`, `/user/integrations`, `/user/sync-status`, `/user/usage`)
+4. **Identifiers/urls in request body** (not URL path)
 5. **Consistent response format** across all endpoints
-
----
+6. **No `success` boolean** - HTTP status codes indicate success/failure
 
 ## Core Schema Definitions
 
@@ -184,48 +252,49 @@ The **same Person schema** is used everywhere in V2.
   "first_name": "John",
   "last_name": "Doe",
   "full_name": "John Doe",
-  "linkedin_url": "https://linkedin.com/in/johndoe",
+  "linkedin_url": "<https://linkedin.com/in/johndoe>",
   "headline": "CEO at Acme Corporation",
   "location": {
     "city": "San Francisco",
     "state": "CA",
     "country": "US"
   },
-  "current_position": {
+  "position": {
     "title": "Chief Executive Officer",
     "company": {
       "id": "company_xyz789",
       "name": "Acme Corporation",
-      "linkedin_url": "https://linkedin.com/company/acme",
+      "linkedin_url": "<https://linkedin.com/company/acme>",
       "domain": "acme.com"
     },
-    "start_date": "2020-01-15"
+    "start_date": "2020-01-15",
+    "end_date": null
   },
-  "profile_image_url": "https://media.licdn.com/dms/image/...",
+  "image_url": "<https://media.licdn.com/dms/image/>...",
   "email": "john.doe@example.com"
 }
 ```
 
 **Field Definitions**:
 
-| Field                         | Type           | Required | Description                            |
-| ----------------------------- | -------------- | -------- | -------------------------------------- |
-| `id`                          | string         | ✅ Yes   | Village person ID (format: `person_*`) |
-| `first_name`                  | string         | ✅ Yes   | First name                             |
-| `last_name`                   | string         | ✅ Yes   | Last name                              |
-| `full_name`                   | string         | No       | Full name (computed)                   |
-| `linkedin_url`                | string (uri)   | No       | LinkedIn profile URL                   |
-| `headline`                    | string         | No       | Professional headline                  |
-| `location`                    | object         | No       | Geographic location                    |
-| `location.city`               | string         | No       | City                                   |
-| `location.state`              | string         | No       | State/province                         |
-| `location.country`            | string         | No       | Country code                           |
-| `current_position`            | object         | No       | Current job position                   |
-| `current_position.title`      | string         | No       | Job title                              |
-| `current_position.company`    | Company        | No       | Company object (see below)             |
-| `current_position.start_date` | string (date)  | No       | Start date (YYYY-MM-DD)                |
-| `profile_image_url`           | string (uri)   | No       | Profile image URL                      |
-| `email`                       | string (email) | No       | Email address (if available)           |
+| Field                 | Type           | Required | Description                  |
+| --------------------- | -------------- | -------- | ---------------------------- |
+| `id`                  | string         | ✅ Yes   | Village person ID            |
+| `first_name`          | string         | ✅ Yes   | First name                   |
+| `last_name`           | string         | ✅ Yes   | Last name                    |
+| `full_name`           | string         | No       | Full name (computed)         |
+| `linkedin_url`        | string (uri)   | No       | LinkedIn profile URL         |
+| `headline`            | string         | No       | Professional headline        |
+| `location`            | object         | No       | Geographic location          |
+| `location.city`       | string         | No       | City                         |
+| `location.state`      | string         | No       | State/province               |
+| `location.country`    | string         | No       | Country code                 |
+| `position`            | object         | No       | Current job position         |
+| `position.title`      | string         | No       | Job title                    |
+| `position.company`    | Company        | No       | Company object (see below)   |
+| `position.start_date` | string (date)  | No       | Start date (YYYY-MM-DD)      |
+| `image_url`           | string (uri)   | No       | Profile image URL            |
+| `email`               | string (email) | No       | Email address (if available) |
 
 **Used in**:
 
@@ -243,11 +312,11 @@ The **same Company schema** is used everywhere in V2.
 {
   "id": "company_xyz789",
   "name": "Acme Corporation",
-  "linkedin_url": "https://linkedin.com/company/acme",
+  "linkedin_url": "<https://linkedin.com/company/acme>",
   "domain": "acme.com",
   "industry": "Technology",
   "employee_count": 5000,
-  "logo_url": "https://logo.clearbit.com/acme.com",
+  "image_url": "<https://logo.clearbit.com/acme.com>",
   "location": {
     "city": "San Francisco",
     "state": "CA",
@@ -266,7 +335,7 @@ The **same Company schema** is used everywhere in V2.
 | `domain`           | string       | No       | Company website domain                   |
 | `industry`         | string       | No       | Primary industry                         |
 | `employee_count`   | integer      | No       | Number of employees                      |
-| `logo_url`         | string (uri) | No       | Company logo URL                         |
+| `image_url`        | string (uri) | No       | Company logo URL                         |
 | `location`         | object       | No       | Company HQ location                      |
 | `location.city`    | string       | No       | City                                     |
 | `location.state`   | string       | No       | State/province                           |
@@ -276,7 +345,60 @@ The **same Company schema** is used everywhere in V2.
 
 - `CompanySearchResult.company`
 - `CompanyWarmthScore.company`
-- `Person.current_position.company`
+- `Person.position.company`
+
+### User Schema
+
+The **User schema** represents the authenticated user.
+
+```json
+{
+  "id": "user_abc123",
+  "email": "john@example.com",
+  "name": "John Doe",
+  "created_at": "2024-01-01T00:00:00Z",
+  "is_sync_complete": true,
+  "is_active": true /
+}
+
+```
+
+**Field Definitions**:
+
+| Field              | Type              | Required | Description                                           |
+| ------------------ | ----------------- | -------- | ----------------------------------------------------- |
+| `id`               | string            | ✅ Yes   | Village user ID (format: `user_*`)                    |
+| `email`            | string (email)    | ✅ Yes   | User email address                                    |
+| `name`             | string            | ✅ Yes   | User full name                                        |
+| `created_at`       | string (datetime) | ✅ Yes   | Account creation timestamp                            |
+| `is_sync_complete` | boolean           | ✅ Yes   | Whether the user's initial sync is complete           |
+| `is_active`        | boolean           | ✅ Yes   | User active status (reflects `app_user.active` value) |
+
+**Used in**:
+
+- `GET /user` response
+
+### Integration Schema
+
+Represents a connected integration (Google, LinkedIn).
+
+```json
+{
+  "type": "google",
+  "is_sync_complete": true
+}
+```
+
+**Field Definitions**:
+
+| Field              | Type    | Required | Description                            |
+| ------------------ | ------- | -------- | -------------------------------------- |
+| `type`             | string  | ✅ Yes   | Integration type: `google`, `linkedin` |
+| `is_sync_complete` | boolean | ✅ Yes   | Whether integration is finished        |
+
+**Used in**:
+
+- `GET /user/integrations` response
 
 ### ConnectionPath Schema
 
@@ -321,11 +443,12 @@ Represents a path from user to target person.
 
 ### Success Response Envelope
 
+**HTTP Status**: 2xx (200, 201, etc.)
+
 ```json
 {
-  "success": true,
   "data": {
-    /* Endpoint-specific data */
+    // Endpoint-specific data
   },
   "meta": {
     "request_id": "req_abc123",
@@ -333,7 +456,6 @@ Represents a path from user to target person.
     "api_version": "2.0"
   },
   "pagination": {
-    // Optional
     "cursor": "eyJvZmZzZXQiOjIwfQ==",
     "has_more": true,
     "count": 20
@@ -343,9 +465,10 @@ Represents a path from user to target person.
 
 ### Error Response Envelope
 
+**HTTP Status**: 4xx or 5xx
+
 ```json
 {
-  "success": false,
   "error": {
     "type": "validation_error",
     "title": "Invalid request parameters",
@@ -367,6 +490,8 @@ Represents a path from user to target person.
 }
 ```
 
+**Note**: Check HTTP status code for errors. Presence of `error` key (instead of `data` key) indicates error response.
+
 **Error Types**:
 
 - `validation_error` (400)
@@ -377,9 +502,9 @@ Represents a path from user to target person.
 - `internal_error` (500)
 - `service_unavailable_error` (503)
 
----
+## 📢  Discussion points
 
-## Authentication & Authorization (OPEN DISCUSSION)
+### How do direct users authenticate on the API?
 
 ### Current V2 Design: Partner-Generated Tokens
 
@@ -390,469 +515,104 @@ V2 is designed for **partners** who generate tokens for their users:
 │   Partner    │
 └──────┬───────┘
        │
-       ├─ Has: Partner API Key (vill_partner_*)
+       ├─ Has: Partner API Key (sk_*)
        │
        ├─ Step 1: POST /auth/tokens
-       │  Header: secret-key: vill_partner_abc123
-       │  Body: {external_user_id, scopes}
+       │  Header: secret-key: sk_example
+       │  Body: {external_user_id, email}
        │
-       ├─ Step 2: Receives token (village_usr_*)
+       ├─ Step 2: Receives token (jwt)
        │
        └─ Step 3: Uses token for API calls
-          Header: Authorization: Bearer village_usr_xyz789
-```
-
-**Works well for**: Partners integrating Village into their apps where users don't have Village accounts.
-
----
-
-### ❓ Question: How do DIRECT USERS use the API?
-
-Users who have Village accounts and want to use the API directly - how should they authenticate?
-
----
-
-### Option 1: User API Keys (Recommended ✅)
-
-Allow users to generate API keys from their dashboard and use directly:
-
-```bash
-# User generates API key from Village dashboard
-# Key format: vill_user_abc123def456
-
-# Use directly in all endpoints:
-curl https://api.village.ai/v2/people/paths \
-  -H "Authorization: Bearer vill_user_abc123..." \
-  -d '{"url": "https://linkedin.com/in/johndoe"}'
-```
-
-**Pros**:
-
-- ✅ Simple for users - no token generation needed
-- ✅ Users already have Village accounts
-- ✅ Clear separation: Partners vs Users
-- ✅ Matches how Stripe, GitHub, OpenAI work
-- ✅ Long-lived keys (user controls revocation)
-
-**Cons**:
-
-- ❌ Need to support two auth types (API keys + tokens)
-- ❌ Long-lived keys = higher security risk if leaked
-
-**Implementation**:
-
-```typescript
-// Detect auth type by prefix
-if (authHeader.startsWith("vill_user_")) {
-  // Direct user API key - full network access
-} else if (authHeader.startsWith("village_usr_")) {
-  // Partner-generated token - scoped access
-}
-```
-
----
-
-### Option 2: Users Also Generate Tokens
-
-Users call `/auth/tokens` to generate tokens for themselves:
-
-```bash
-# Step 1: User generates token for themselves
-curl https://api.village.ai/v2/auth/tokens \
-  -H "secret-key: vill_user_key_abc123" \
-  -d '{"external_user_id": "self", "scopes": ["read:network"]}'
-
-# Step 2: Use the token
-curl https://api.village.ai/v2/people/paths \
-  -H "Authorization: Bearer village_usr_xyz789..." \
-  -d '{"url": "..."}'
-```
-
-**Pros**:
-
-- ✅ Single auth flow for everyone
-- ✅ Shorter-lived tokens (better security)
-- ✅ Simpler implementation (one auth mechanism)
-
-**Cons**:
-
-- ❌ Extra step for users (feels redundant)
-- ❌ Users generating tokens for themselves is unusual
-- ❌ Confusing UX ("why do I need a token if I have an API key?")
-
----
-
-### Option 3: Hybrid Approach ⭐
-
-Support both User API Keys AND Partner Tokens:
-
-```typescript
-// API key format: vill_user_xxx or vill_partner_xxx
-// Token format: village_usr_xxx
-
-if (authHeader.startsWith("vill_user_")) {
-  // Direct user API key
-  // Full access to that user's network
-} else if (authHeader.startsWith("vill_partner_")) {
-  // Partner API key (only for /auth/tokens endpoint)
-} else if (authHeader.startsWith("village_usr_")) {
-  // Partner-generated user token
-  // Access based on token scopes
-}
-```
-
-**Flow for Direct Users**:
+          Header: Authorization: Bearer jwt
 
 ```
-┌──────────────┐
-│  Direct User │
-└──────┬───────┘
-       │
-       ├─ Generates: User API Key (vill_user_*) from dashboard
-       │
-       └─ Uses key directly for all API calls
-          Header: Authorization: Bearer vill_user_abc123
-```
 
-**Flow for Partners**:
-
-```
-┌──────────────┐
-│   Partner    │
-└──────┬───────┘
-       │
-       ├─ Step 1: POST /auth/tokens with Partner API Key
-       │
-       ├─ Step 2: Receives user token (village_usr_*)
-       │
-       └─ Step 3: Uses token with scopes
-```
-
-**Pros**:
-
-- ✅ Best of both worlds
-- ✅ Partners use token flow (scoped access)
-- ✅ Users use API keys directly (simple)
-- ✅ Common pattern (Stripe does exactly this)
-- ✅ Flexibility for different use cases
-
-**Cons**:
-
-- ❌ Slightly more complex to implement
-- ❌ Two auth flows to document/maintain
-
----
-
-### Comparison Table
-
-| Aspect                        | Option 1: User API Keys | Option 2: Users Generate Tokens | Option 3: Hybrid  |
-| ----------------------------- | ----------------------- | ------------------------------- | ----------------- |
-| **User Experience**           | ⭐ Simple (one step)    | ⚠️ Complex (two steps)          | ⭐ Simple         |
-| **Partner Experience**        | ⭐ Token flow           | ⭐ Token flow                   | ⭐ Token flow     |
-| **Security**                  | ⚠️ Long-lived keys      | ⭐ Short-lived tokens           | ⭐ Both options   |
-| **Implementation Complexity** | ⚠️ Two auth types       | ⭐ One auth type                | ⚠️ Two auth types |
-| **Industry Standard**         | ⭐ Yes (Stripe, GitHub) | ❌ Unusual                      | ⭐ Yes (Stripe)   |
-| **Flexibility**               | ⚠️ Users only           | ⚠️ Limited                      | ⭐ Maximum        |
-
----
-
-### 🎯 Recommendation
-
-**Go with Option 3 (Hybrid)** because:
-
-1. **Industry standard**: Stripe, GitHub, and other major APIs support both
-2. **Best UX**: Users get simple API keys, partners get scoped tokens
-3. **Flexibility**: Different use cases have different needs
-4. **Future-proof**: Can add features to either auth type independently
-
-**Implementation plan**:
-
-- User API keys: `vill_user_*` (full network access, revokable from dashboard)
-- Partner API keys: `vill_partner_*` (only for `/auth/tokens` endpoint)
-- User tokens: `village_usr_*` (scoped access, expirable)
-
----
-
-### ❓ OPEN QUESTION FOR TEAM
-
-**Which authentication approach should we implement?**
-
-- [ ] Option 1: User API Keys only
-- [ ] Option 2: Users also generate tokens
-- [ ] Option 3: Hybrid (User API Keys + Partner Tokens) ← Recommended
-
-**Please discuss and document decision here:**
-
----
-
-## Open Questions for Discussion
-
-### 1. Rate Limiting Strategy
-
-**Current V2 design**:
-
-- Per User: 100 requests/minute
-- Per Partner: 10,000 requests/minute
-- Search Endpoints: 20 requests/minute per user
-
-**Questions**:
-
-- ❓ Are these limits appropriate?
-- ❓ Should we have different limits for different endpoints?
-- ❓ Should we offer paid tiers with higher limits?
-- ❓ How do we handle burst traffic?
-
-**Headers included in all responses**:
-
-```
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 95
-X-RateLimit-Reset: 1704542430
-```
-
----
-
-### 2. API Versioning Strategy
-
-**Current V2 design**: Version in URL (`/v2/people/paths`)
-
-**Questions**:
-
-- ❓ Should we support header-based versioning too? (`X-API-Version: 2.0`)
-- ❓ How long do we support V1 after V2 launches?
-- ❓ Do we support multiple V2 minor versions simultaneously?
-
-**Options**:
-
-- **URL versioning** (current): `/v2/people/paths` → Simple, clear, cache-friendly
-- **Header versioning**: `X-API-Version: 2.0` → More flexible, harder to test
-- **Both**: Support both for flexibility
-
----
-
-### 3. Backward Compatibility with V1
-
-**Questions**:
-
-- ❓ Do we maintain V1 indefinitely?
-- ❓ What's the migration timeline for existing partners?
-- ❓ Do we build automatic V1→V2 adapters?
-- ❓ Do we deprecate V1 endpoints gradually or all at once?
-
-**Proposed migration timeline**:
-
-1. **Month 1-2**: V2 beta release, invite partners to test
-2. **Month 3**: V2 general availability, V1 marked as deprecated
-3. **Month 6**: V1 "sunset" warning to all partners
-4. **Month 9**: V1 becomes read-only (no new features)
-5. **Month 12**: V1 shut down (partners must migrate)
-
----
-
-### 4. Response Size Limits
-
-**Questions**:
-
-- ❓ What's the max response size we should support?
-- ❓ Should we compress large responses automatically?
-- ❓ Should we paginate endpoints that currently don't paginate?
-
-**Current V2 limits**:
-
-- Paths per person: 10 (max)
-- People in batch: 50 (max)
-- Search results: 100 per page (max)
-- Companies in batch: 20 (max)
-
----
-
-### 5. Webhook Support
-
-**Questions**:
-
-- ❓ Should V2 support webhooks for async operations?
-- ❓ What events should trigger webhooks? (e.g., "new connection added", "search completed")
-- ❓ How do partners register webhook endpoints?
-
-**Note**: Current V2 design does NOT include webhooks. This could be a V2.1 feature.
-
----
-
-### 6. SDK Generation
-
-**Questions**:
-
-- ❓ Do we auto-generate SDKs from OpenAPI spec?
-- ❓ Which languages? (TypeScript, Python, Go, Java?)
-- ❓ Do we maintain SDKs ourselves or let community handle it?
-
-**Recommended**:
-
-- Use `openapi-typescript` for TypeScript SDK
-- Use `openapi-generator` for other languages
-- Publish official TypeScript SDK, community SDKs for others
-
----
-
-### 7. Observability & Monitoring
-
-**Questions**:
-
-- ❓ What metrics do we track? (latency, error rate, usage per partner)
-- ❓ Do we expose metrics to partners? (dashboard? API?)
-- ❓ How do we alert partners about issues?
-- ❓ Do we provide status page?
-
-**Included in every response**:
-
-```json
-"meta": {
-  "request_id": "req_abc123",  // ← For support/debugging
-  "timestamp": "...",
-  "api_version": "2.0"
-}
-```
-
----
-
-## Breaking Changes from V1
-
-### For Existing Partners
-
-| V1                                   | V2                                  | Breaking?                       |
-| ------------------------------------ | ----------------------------------- | ------------------------------- |
-| `GET /people/paths/{url}`            | `POST /people/paths`                | ✅ Yes - Method changed         |
-| `GET /companies/paths/{url}`         | `POST /companies/paths`             | ✅ Yes - Method changed         |
-| Response: `{ target, count, paths }` | Response: `{ success, data, meta }` | ✅ Yes - Structure changed      |
-| Person fields: `firstName`           | Person fields: `first_name`         | ✅ Yes - Naming changed         |
-| No auth token generation             | `/auth/tokens` endpoint required    | ✅ Yes - Auth flow changed      |
-| URL-encoded identifiers in path      | Identifiers in request body         | ✅ Yes - Request format changed |
-
-### Migration Required
-
-**All V1 partners must update**:
-
-1. **Change HTTP methods**: GET → POST for paths endpoints
-2. **Update request format**: Move URL from path to request body
-3. **Update response parsing**: Expect `{ success, data, meta }` wrapper
-4. **Update field names**: `firstName` → `first_name`, etc.
-5. **Implement token generation**: Call `/auth/tokens` to get user tokens
-6. **Update error handling**: Expect RFC 7807 error format
-
-### Migration Guide (TODO)
-
-We need to provide:
-
-- [ ] Step-by-step migration guide
-- [ ] Code examples (Before/After)
-- [ ] Migration timeline
-- [ ] Support channel for migration questions
-- [ ] V1→V2 compatibility layer (optional)
-
----
-
-## Next Steps
-
-### 1. Decisions Needed
-
-**High Priority**:
-
-- [ ] **Authentication approach** (Option 1, 2, or 3?)
-- [ ] **Rate limiting values** (Are current limits appropriate?)
-- [ ] **V1 deprecation timeline** (When do we sunset V1?)
-
-**Medium Priority**:
-
-- [ ] API versioning strategy (URL only vs headers)
-- [ ] SDK generation plan (Which languages?)
-- [ ] Observability approach (Metrics dashboard for partners?)
-
-**Low Priority**:
-
-- [ ] Webhook support (V2.0 or V2.1?)
-- [ ] Response compression strategy
-- [ ] Status page requirements
-
----
-
-### 2. Implementation Phases
-
-**Phase 1: Core API (Weeks 1-4)**
-
-- [ ] Implement standardized response middleware
-- [ ] Implement flexible identifier resolution
-- [ ] Implement error handling (RFC 7807)
-- [ ] Implement rate limiting
-- [ ] Create Person/Company schema validators
-
-**Phase 2: Endpoints (Weeks 5-8)**
-
-- [ ] `/auth/tokens` - Token generation
-- [ ] `/people/paths` - Person paths
-- [ ] `/people/search` - People search
-- [ ] `/companies/paths` - Company paths
-- [ ] `/companies/search` - Company search
-
-**Phase 3: Advanced Features (Weeks 9-10)**
-
-- [ ] `/people/batch/paths` - Batch operations
-- [ ] `/companies/batch/paths` - Batch operations
-- [ ] `/people/sort` - Sort by warmth
-- [ ] `/companies/sort` - Sort by warmth
-
-**Phase 4: Documentation & Testing (Weeks 11-12)**
-
-- [ ] Complete OpenAPI spec
-- [ ] Generate TypeScript SDK
-- [ ] Write integration tests
-- [ ] Create migration guide for V1 partners
-- [ ] Set up performance monitoring
-
-**Phase 5: Beta & Launch (Weeks 13-16)**
-
-- [ ] Beta release to select partners
-- [ ] Gather feedback and iterate
-- [ ] General availability launch
-- [ ] Begin V1 deprecation timeline
-
----
-
-### 3. Documentation To-Do
-
-- [ ] Complete migration guide (V1 → V2)
-- [ ] Create authentication guide
-- [ ] Write error handling guide
-- [ ] Create code examples for all endpoints
-- [ ] Set up Mintlify docs for V2
-- [ ] Update Activepieces integration
-
----
-
-### 4. Engineering Discussion
-
-**Please review and provide feedback on**:
-
-1. **Authentication approach** - Which option (1, 2, or 3)?
-2. **Schema completeness** - Are Person/Company schemas complete?
-3. **Missing endpoints** - Any critical endpoints missing?
-4. **Rate limits** - Are proposed limits appropriate?
-5. **Migration timeline** - Is 12-month deprecation timeline realistic?
-6. **Open questions** - Any other concerns or questions?
-
-**Add comments/decisions below**:
-
-```
-[Team discussion notes go here]
-```
-
----
-
-## References
-
--**OpenAPI Spec**: `/new-docs/api-reference/openapi.json` -**V1 OpenAPI Spec**: `/docs/api-reference/openapi.json` -**RFC 7807**: https://tools.ietf.org/html/rfc7807 -**Stripe API Design**: https://stripe.com/docs/api -**GitHub API Design**: https://docs.github.com/en/rest
-
----
-
-**Last Updated**: 2025-01-06
-**Status**: Draft - Awaiting Engineering Review
-**Next Review**: [TBD]
+- Works well for Partners integrating Village into their apps where users don't have Village accounts.
+- Users who have Village accounts and want to use the API directly - how should they authenticate?
+  ### Option 1: User API Keys
+  Allow users to generate API keys from their dashboard and use directly:
+  ```bash
+  # User uses API key in the same Authorization header
+
+  # Use directly in all endpoints:
+  curl <https://api.village.ai/v2/people/paths> \\
+    -H "Authorization: Bearer ak_..." \\
+    -d '{"url": "<https://linkedin.com/in/johndoe>"}'
+
+  ```
+  **Pros**:
+  - ✅ Simple for users - no token generation needed
+  - ✅ Matches how Stripe, GitHub, OpenAI work
+  - ✅ Long-lived keys (user controls revocation)
+  **Cons**:
+  - ❌ Need to support two auth types (API keys + tokens)
+  ### Option 2: Users Also Generate Tokens
+  Users call `/auth/tokens` to generate tokens for themselves:
+  ```bash
+  # Step 1: User generates token for themselves
+  curl <https://api.village.ai/v2/auth/tokens> \\
+    -H "secret-key: ak_" \\
+
+  # Step 2: Use the token
+  curl <https://api.village.ai/v2/people/paths> \\
+    -H "Authorization: Bearer village_usr_xyz789..." \\
+    -d '{"url": "..."}'
+
+  ```
+  **Pros**:
+  - ✅ Single auth flow for everyone
+  - ✅ Shorter-lived tokens (better security)
+  - ✅ Simpler implementation (one auth mechanism)
+  **Cons**:
+  - ❌ Extra step for users (can feel a bit redundant)
+  - ❌ Confusing UX ("why do I need a token if I have an API key?")
+  ### Option 3: Both work
+  Support both User API Keys AND Tokens for users.
+  **Flow for Direct Users**:
+  ```
+  ┌──────────────┐
+  │  Direct User │
+  └──────┬───────┘
+         │
+         ├─ Generates: User API Key (vill_user_*) from dashboard
+         │
+         └─ Uses key directly for all API calls
+            Header: Authorization: Bearer vill_user_abc123
+
+  ```
+  **Flow for Partners**:
+  ```
+  ┌──────────────┐
+  │   Partner    │
+  └──────┬───────┘
+         │
+         ├─ Step 1: POST /auth/tokens with Partner API Key
+         │
+         ├─ Step 2: Receives user token (village_usr_*)
+         │
+         └─ Step 3: Uses token with scopes
+
+  ```
+  **Pros**:
+  - ✅ Partners use token
+  - ✅ Users use API keys directly or token
+  - ✅ Flexibility for different use cases
+  **Cons**:
+  - ❌ Two auth flows to document/maintain
+
+### What IDs should we return on APIs?
+
+<aside>
+
+Some considerations
+
+- Neo4j Person id is not reliable due to possible person getting merged, we would have to implement some sort of record that maps to merged IDs
+- Neo4j Company id is essentially the linkedin slug of the company
+- Postgres auto increment id is also not a great choice
+</aside>
+
+### Suggestion
+
+- Create a new resource based ID on Postgres, similar to Stripe:
+  e.g. `com_NffrFeUfNV2Hib` `per_NffrFeUfNV2Hib`
