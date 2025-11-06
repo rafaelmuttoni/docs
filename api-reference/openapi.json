@@ -1,90 +1,1588 @@
 {
-  "openapi": "3.1.0",
+  "openapi": "3.0.1",
   "info": {
-    "title": "OpenAPI Plant Store",
-    "description": "A sample API that uses a plant store as an example to demonstrate features in the OpenAPI specification",
-    "license": {
-      "name": "MIT"
-    },
-    "version": "1.0.0"
+    "title": "Village API",
+    "description": "Village Relationship Intelligence API enables partners to access connection paths and relationship data through their integrated applications.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Village Support",
+      "url": "https://village.co/support"
+    }
   },
   "servers": [
     {
-      "url": "http://sandbox.mintlify.com"
+      "url": "https://api.village.do/v1"
     }
   ],
   "security": [
     {
-      "bearerAuth": []
+      "APIKey": []
     }
   ],
   "paths": {
-    "/plants": {
+    "/people/paths/{url}": {
       "get": {
-        "description": "Returns all plants from the system that the user has access to",
+        "summary": "Get Person Paths",
+        "description": "Returns connection paths and warmth score to a LinkedIn profile",
+        "tags": ["People"],
+        "security": [{ "UserTokenAuth": [] }, { "APIKey": [] }],
         "parameters": [
+          {
+            "name": "url",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "LinkedIn URL of the target person"
+          },
+          {
+            "$ref": "#/components/parameters/UserIdentifierHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved paths with connection paths and warmth scores",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonPaths"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        }
+      }
+    },
+    "/companies/paths/{url}": {
+      "get": {
+        "summary": "Get Company Paths",
+        "description": "Returns connection paths to a company using either its LinkedIn URL or domain URL. Returns up to 50 people at the company with up to 10 introducers per person.",
+        "tags": ["Companies"],
+        "security": [{ "UserTokenAuth": [] }, { "APIKey": [] }],
+        "parameters": [
+          {
+            "name": "url",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "LinkedIn URL or domain URL of the target company (URL encoded)"
+          },
+          {
+            "$ref": "#/components/parameters/UserIdentifierHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved company paths",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyPathsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/people/sort": {
+      "post": {
+        "summary": "Sort People",
+        "description": "Sort a list of LinkedIn profiles by relationship strength with the user",
+        "tags": ["People"],
+        "security": [{ "UserTokenAuth": [] }, { "APIKey": [] }],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdentifierHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["people"],
+                "properties": {
+                  "people": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Array of LinkedIn URLs",
+                    "example": [
+                      "https://linkedin.com/in/gavin-belson",
+                      "https://linkedin.com/in/peter-gregory",
+                      "https://linkedin.com/in/big-head"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sorted list of people with warmth scores",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SortResponse",
+                  "example": [
+                    {
+                      "url": "https://linkedin.com/in/big-head",
+                      "score": 9.0,
+                      "score_label": "Excellent"
+                    },
+                    {
+                      "url": "https://linkedin.com/in/peter-gregory",
+                      "score": 8.5,
+                      "score_label": "Excellent"
+                    },
+                    {
+                      "url": "https://linkedin.com/in/gavin-belson",
+                      "score": 7.0,
+                      "score_label": "Very Good"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/companies/sort": {
+      "post": {
+        "summary": "Sort Companies",
+        "description": "Sort a list of companies by relationship strength with the user",
+        "tags": ["Companies"],
+        "security": [{ "UserTokenAuth": [] }, { "APIKey": [] }],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdentifierHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["companies"],
+                "properties": {
+                  "companies": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Array of company LinkedIn URLs or domain URLs",
+                    "example": [
+                      "https://linkedin.com/company/hooli",
+                      "https://linkedin.com/company/aviato"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved sorted list of companies with relationship scores",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SortResponse",
+                  "example": [
+                    {
+                      "url": "https://linkedin.com/company/hooli",
+                      "score": 9.0,
+                      "score_label": "Excellent"
+                    },
+                    {
+                      "url": "https://linkedin.com/company/aviato",
+                      "score": 8.5,
+                      "score_label": "Excellent"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/subscription/cancel": {
+      "post": {
+        "summary": "Cancel Subscription",
+        "description": "Cancel a provisioned user's subscription. Use this endpoint to automatically cancel access when users downgrade their subscription.",
+        "tags": ["Provisioned Users"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdentifierHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subscription cancelled successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "User subscription cancelled successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "500": {
+            "description": "Error cancelling subscription"
+          }
+        }
+      }
+    },
+    "/users/authorization": {
+      "post": {
+        "summary": "Create Authorization",
+        "description": "Generate a token for a more secure integration with Village Embedded UIs",
+        "tags": ["Provisioned Users"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdentifierHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "description": "Email address of the user",
+                    "example": "richard@piedpiper.com"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "example": "eyJ0eXAiOiJKV1QiLCJhbGc..."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User identifier is required"
+          },
+          "500": {
+            "description": "Failed to authorize user"
+          }
+        }
+      }
+    },
+    "/people/enrich/emails/{identifier}": {
+      "get": {
+        "summary": "Enrich Email",
+        "description": "Enrich a single LinkedIn profile or Village ID with an email address",
+        "tags": ["People"],
+        "security": [{ "UserTokenAuth": [] }, { "APIKey": [] }],
+        "parameters": [
+          {
+            "name": "identifier",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "LinkedIn URL or Village ID"
+          },
+          {
+            "$ref": "#/components/parameters/UserIdentifierHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully enriched email",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailEnrichmentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        }
+      }
+    },
+    "/people/enrich/{type}": {
+      "get": {
+        "summary": "Enrich Profile",
+        "description": "Enrich a single person profile with basic professional information and work history.",
+        "tags": ["People"],
+        "security": [{ "UserTokenAuth": [] }, { "APIKey": [] }],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["basic"]
+            },
+            "description": "Enrichment level - currently only 'basic' is available"
+          },
+          {
+            "$ref": "#/components/parameters/UserIdentifierHeader"
+          },
+          {
+            "name": "village_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Village internal user ID"
+          },
+          {
+            "name": "linkedin_url",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "LinkedIn profile URL"
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Email address"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully enriched person profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonEnrichmentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid identifier",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "Person not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        }
+      }
+    },
+    "/people/enrich/{type}/bulk": {
+      "post": {
+        "summary": "Enrich Profile - Bulk",
+        "description": "Enrich multiple person profiles (max 10) with basic professional information and work history.",
+        "tags": ["People"],
+        "security": [{ "UserTokenAuth": [] }, { "APIKey": [] }],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["basic"]
+            },
+            "description": "Enrichment level - currently only 'basic' is available"
+          },
+          {
+            "$ref": "#/components/parameters/UserIdentifierHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["identifiers"],
+                "properties": {
+                  "identifiers": {
+                    "type": "array",
+                    "maxItems": 10,
+                    "items": {
+                      "type": "object",
+                      "oneOf": [
+                        {
+                          "properties": {
+                            "village_id": {
+                              "type": "string",
+                              "description": "Village internal user ID"
+                            }
+                          },
+                          "required": ["village_id"],
+                          "additionalProperties": false
+                        },
+                        {
+                          "properties": {
+                            "linkedin_url": {
+                              "type": "string",
+                              "description": "LinkedIn profile URL"
+                            }
+                          },
+                          "required": ["linkedin_url"],
+                          "additionalProperties": false
+                        },
+                        {
+                          "properties": {
+                            "email": {
+                              "type": "string",
+                              "description": "Email address"
+                            }
+                          },
+                          "required": ["email"],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "example": {
+                "identifiers": [
+                  { "village_id": "user-123" },
+                  { "linkedin_url": "https://linkedin.com/in/johndoe" },
+                  { "email": "jane.smith@company.com" }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully processed bulk enrichment request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonEnrichmentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or too many identifiers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        }
+      }
+    },
+    "/people/enrich/emails/bulk/{identifiers}": {
+      "get": {
+        "summary": "Enrich Emails (Bulk)",
+        "description": "Enrich multiple LinkedIn profiles or Village IDs with email addresses",
+        "tags": ["People"],
+        "security": [{ "UserTokenAuth": [] }, { "APIKey": [] }],
+        "parameters": [
+          {
+            "name": "identifiers",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Semicolon-separated list of LinkedIn URLs or Village IDs"
+          },
+          {
+            "$ref": "#/components/parameters/UserIdentifierHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully enriched emails",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkEmailEnrichmentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        }
+      }
+    },
+    "/lists": {
+      "post": {
+        "summary": "Create List",
+        "description": "Create an empty or pre-populated list.",
+        "tags": ["Lists"],
+        "security": [{ "UserTokenAuth": [] }, { "APIKey": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/UserIdentifierHeader" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "json_queries"],
+                "properties": {
+                  "title": { "type": "string" },
+                  "type": {
+                    "type": "string",
+                    "enum": ["people", "company"],
+                    "default": "people"
+                  },
+                  "description": { "type": "string" },
+                  "is_public": { "type": "boolean", "default": false }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "List created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/List" }
+                      }
+                    }
+                  ]
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "id": 42,
+                    "title": "Seed investors",
+                    "type": "people",
+                    "description": "",
+                    "is_public": false,
+                    "fit_count": 0,
+                    "created_date": "2024-06-26T12:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "get": {
+        "summary": "Get Lists",
+        "tags": ["Lists"],
+        "security": [{ "UserTokenAuth": [] }, { "APIKey": [] }],
+        "parameters": [
+          { "name": "name", "in": "query", "schema": { "type": "string" } },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["people", "company"] }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer", "default": 1 }
+          },
           {
             "name": "limit",
             "in": "query",
-            "description": "The maximum number of results to return",
+            "schema": { "type": "integer", "default": 20 }
+          },
+          { "$ref": "#/components/parameters/UserIdentifierHeader" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lists page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/ListsPage" }
+                      }
+                    }
+                  ]
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "lists": [
+                      {
+                        "id": 42,
+                        "title": "Seed investors",
+                        "type": "people",
+                        "fit_count": 0
+                      },
+                      {
+                        "id": 43,
+                        "title": "AI founders",
+                        "type": "people",
+                        "fit_count": 18
+                      }
+                    ],
+                    "pagination": {
+                      "total": 2,
+                      "page": 1,
+                      "limit": 20,
+                      "hasNextPage": false
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/lists/{listId}": {
+      "get": {
+        "summary": "Get List",
+        "tags": ["Lists"],
+        "security": [{ "UserTokenAuth": [] }, { "APIKey": [] }],
+        "parameters": [
+          {
+            "name": "listId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          },
+          { "$ref": "#/components/parameters/UserIdentifierHeader" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/List" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "delete": {
+        "summary": "Delete List",
+        "tags": ["Lists"],
+        "security": [{ "UserTokenAuth": [] }, { "APIKey": [] }],
+        "parameters": [
+          {
+            "name": "listId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          },
+          { "$ref": "#/components/parameters/UserIdentifierHeader" }
+        ],
+        "responses": {
+          "200": {
+            "description": "List deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ListDelete" },
+                "example": {
+                  "success": true,
+                  "message": "List deleted successfully"
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/lists/{listId}/items": {
+      "get": {
+        "summary": "Get List Items",
+        "tags": ["Lists"],
+        "security": [{ "UserTokenAuth": [] }, { "APIKey": [] }],
+        "parameters": [
+          {
+            "name": "listId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer", "default": 1 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20 }
+          },
+          { "$ref": "#/components/parameters/UserIdentifierHeader" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Items page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/ListItemsPage" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "post": {
+        "summary": "Add Item to List",
+        "tags": ["Lists"],
+        "security": [{ "UserTokenAuth": [] }, { "APIKey": [] }],
+        "parameters": [
+          {
+            "name": "listId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          },
+          { "$ref": "#/components/parameters/UserIdentifierHeader" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["identifier"],
+                "properties": {
+                  "identifier": {
+                    "type": "string",
+                    "description": "Village-ID or LinkedIn URL"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": ["people", "company"],
+                    "default": "people"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Item added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": { "$ref": "#/components/schemas/ListItem" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/companies/enrich/{type}": {
+      "get": {
+        "summary": "Enrich Company",
+        "description": "Enrich a single company profile with basic information including employee size, industry, and founding details.",
+        "tags": ["Companies"],
+        "security": [{ "UserTokenAuth": [] }, { "APIKey": [] }],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["basic"]
+            },
+            "description": "Enrichment level - currently only 'basic' is available"
+          },
+          {
+            "$ref": "#/components/parameters/UserIdentifierHeader"
+          },
+          {
+            "name": "village_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Village internal company ID"
+          },
+          {
+            "name": "linkedin_url",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "LinkedIn company page URL"
+          },
+          {
+            "name": "domain",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Company domain name"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully enriched company profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyEnrichmentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid identifier",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "Company not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        }
+      }
+    },
+    "/companies/enrich/{type}/bulk": {
+      "post": {
+        "summary": "Enrich Company - Bulk",
+        "description": "Enrich multiple company profiles (max 10) with basic information including employee size, industry, and founding details.",
+        "tags": ["Companies"],
+        "security": [{ "UserTokenAuth": [] }, { "APIKey": [] }],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["basic"]
+            },
+            "description": "Enrichment level - currently only 'basic' is available"
+          },
+          {
+            "$ref": "#/components/parameters/UserIdentifierHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["identifiers"],
+                "properties": {
+                  "identifiers": {
+                    "type": "array",
+                    "maxItems": 10,
+                    "items": {
+                      "type": "object",
+                      "oneOf": [
+                        {
+                          "properties": {
+                            "village_id": {
+                              "type": "string",
+                              "description": "Village internal company ID"
+                            }
+                          },
+                          "required": ["village_id"],
+                          "additionalProperties": false
+                        },
+                        {
+                          "properties": {
+                            "linkedin_url": {
+                              "type": "string",
+                              "description": "LinkedIn company page URL"
+                            }
+                          },
+                          "required": ["linkedin_url"],
+                          "additionalProperties": false
+                        },
+                        {
+                          "properties": {
+                            "domain": {
+                              "type": "string",
+                              "description": "Company domain name"
+                            }
+                          },
+                          "required": ["domain"],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "example": {
+                "identifiers": [
+                  { "village_id": "company-123" },
+                  { "linkedin_url": "https://linkedin.com/company/example" },
+                  { "domain": "google.com" }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully processed bulk enrichment request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyEnrichmentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or too many identifiers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        }
+      }
+    },
+    "/companies/list": {
+      "get": {
+        "summary": "List companies",
+        "description": "Get the user's companies ranked by relationship strength.",
+        "tags": ["Companies"],
+        "security": [{ "UserTokenAuth": [] }, { "APIKey": [] }],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdentifierHeader"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "integer",
-              "format": "int32"
+              "description": "Page number for pagination"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "default": 50,
+              "description": "Number of results per page"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Plant response",
+            "description": "Successfully retrieved top companies",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Plant"
+                  "$ref": "#/components/schemas/TopCompaniesResponse"
+                },
+                "example": {
+                  "data": [
+                    {
+                      "linkedin_url": "https://linkedin.com/company/stealth-startup-51",
+                      "score": 174.2,
+                      "score_label": "Excellent"
+                    },
+                    {
+                      "domain_name": "peachwiz.com",
+                      "linkedin_url": "https://linkedin.com/company/peachwiz",
+                      "score": 79.2,
+                      "score_label": "Excellent"
+                    },
+                    {
+                      "linkedin_url": "https://linkedin.com/company/wwbn",
+                      "score": 79.2,
+                      "score_label": "Excellent"
+                    },
+                    {
+                      "domain_name": "linkedin.com",
+                      "linkedin_url": "https://linkedin.com/company/linkedin",
+                      "score": 29.1,
+                      "score_label": "Excellent"
+                    },
+                    {
+                      "linkedin_url": "https://linkedin.com/company/udacity",
+                      "score": 28.0,
+                      "score_label": "Excellent"
+                    }
+                  ],
+                  "pagination": {
+                    "page": 1,
+                    "limit": 5,
+                    "hasNextPage": true
                   }
                 }
               }
             }
           },
           "400": {
-            "description": "Unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        }
+      }
+    },
+    "/companies/search": {
+      "post": {
+        "summary": " AI company search",
+        "description": "Search for companies using natural language queries. The AI converts your query into structured filters and returns matching results.",
+        "tags": ["Companies"],
+        "security": [{ "UserTokenAuth": [] }, { "APIKey": [] }],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdentifierHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["query"],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "Natural language search query",
+                    "example": "Fintech companies in London"
+                  },
+                  "page": {
+                    "type": "integer",
+                    "description": "Page number for pagination"
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "maximum": 100,
+                    "default": 25,
+                    "description": "Number of results per page"
+                  }
                 }
               }
             }
           }
-        }
-      },
-      "post": {
-        "description": "Creates a new plant in the store",
-        "requestBody": {
-          "description": "Plant to add to the store",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NewPlant"
-              }
-            }
-          },
-          "required": true
         },
         "responses": {
           "200": {
-            "description": "plant response",
+            "description": "Successfully processed AI search query",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Plant"
+                  "$ref": "#/components/schemas/CompaniesSearchResponse"
+                },
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "id": "acme-corp",
+                      "type": "company",
+                      "name": "Acme Corporation",
+                      "linkedinId": 12345678,
+                      "linkedinUrl": "https://www.linkedin.com/company/acme-corp",
+                      "website": "https://www.acme-corp.com",
+                      "domain": "acme-corp.com",
+                      "employeeSize": 150,
+                      "sizeRange": "101-250",
+                      "founded": 2015,
+                      "description": "A leading technology company specializing in innovative software solutions for enterprise clients."
+                    },
+                    {
+                      "id": "global-solutions",
+                      "type": "company",
+                      "name": "Global Solutions Inc",
+                      "linkedinId": 87654321,
+                      "linkedinUrl": "https://www.linkedin.com/company/global-solutions",
+                      "website": "https://www.globalsolutions.com",
+                      "domain": "globalsolutions.com",
+                      "employeeSize": 75,
+                      "sizeRange": "51-100",
+                      "founded": 2018
+                    }
+                  ],
+                  "pagination": {
+                    "page": 1,
+                    "pageSize": 2,
+                    "hasNextPage": true
+                  },
+                  "meta": {
+                    "query": "Fintech companies in London",
+                    "searchType": "ai",
+                    "apiVersion": "v1"
+                  }
                 }
               }
             }
           },
           "400": {
-            "description": "unexpected error",
+            "description": "Bad Request - Invalid query or parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_ERROR",
+                    "message": "Invalid request parameters",
+                    "details": [
+                      {
+                        "code": "too_small",
+                        "minimum": 1,
+                        "type": "string",
+                        "message": "Query is required and must be non-empty",
+                        "path": ["query"]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "503": {
+            "description": "Service Unavailable - AI service temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "AI_SERVICE_UNAVAILABLE",
+                    "message": "AI service is temporarily unavailable"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/people/search": {
+      "post": {
+        "summary": "AI people search",
+        "description": "Search for people using natural language queries. The AI converts your query into structured filters and returns matching results.",
+        "tags": ["People"],
+        "security": [{ "UserTokenAuth": [] }, { "APIKey": [] }],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/UserIdentifierHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["query"],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "Natural language search query",
+                    "example": "Fintech CFOs in London"
+                  },
+                  "page": {
+                    "type": "integer",
+                    "description": "Page number for pagination"
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "maximum": 100,
+                    "default": 25,
+                    "description": "Number of results per page"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully processed AI search query",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PeopleSearchResponse"
+                },
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "id": "12345678-1234-5678-9abc-123456789def",
+                      "type": "person",
+                      "avatar": "https://example.com/avatars/john-smith.jpg",
+                      "country": "United States",
+                      "firstName": "John",
+                      "lastName": "Smith",
+                      "fullName": "John Smith",
+                      "linkedinIdentifier": "john-smith-12345",
+                      "linkedinUrl": "https://linkedin.com/in/john-smith-12345",
+                      "location": "San Francisco, CA",
+                      "villageUrl": "https://example.com/people/profile/encoded-id-1",
+                      "warmthScore": 85.2,
+                      "relationship": {
+                        "warmthScore": 85.2,
+                        "paths": {
+                          "count": 2,
+                          "ids": ["path-123", "path-456"],
+                          "avatars": [
+                            "https://example.com/avatars/connector1.jpg",
+                            "https://example.com/avatars/connector2.jpg"
+                          ]
+                        }
+                      },
+                      "currentWork": {
+                        "position": "Founder & CEO",
+                        "startDate": "2018-03-01",
+                        "endDate": null,
+                        "company": {
+                          "id": "example-startup",
+                          "type": "company",
+                          "name": "Example Startup Inc.",
+                          "linkedinUrl": "https://linkedin.com/company/example-startup",
+                          "website": "https://example-startup.com",
+                          "domain": "example-startup.com",
+                          "imageUrl": "https://example.com/company-logos/example-startup.jpg",
+                          "employeeSize": 25
+                        }
+                      }
+                    },
+                    {
+                      "id": "87654321-4321-8765-cba9-987654321fed",
+                      "type": "person",
+                      "avatar": "https://example.com/avatars/jane-doe.jpg",
+                      "country": "United Kingdom",
+                      "firstName": "Jane",
+                      "lastName": "Doe",
+                      "fullName": "Jane Doe",
+                      "linkedinIdentifier": "jane-doe-67890",
+                      "linkedinUrl": "https://linkedin.com/in/jane-doe-67890",
+                      "location": "London, UK",
+                      "villageUrl": "https://example.com/people/profile/encoded-id-2",
+                      "warmthScore": 72.8,
+                      "relationship": {
+                        "warmthScore": 72.8,
+                        "paths": {
+                          "count": 1,
+                          "ids": ["path-789"],
+                          "avatars": [
+                            "https://example.com/avatars/connector3.jpg"
+                          ]
+                        }
+                      },
+                      "currentWork": {
+                        "position": "CTO & Co-founder",
+                        "startDate": "2019-06-15",
+                        "endDate": null,
+                        "company": {
+                          "id": "tech-innovations",
+                          "type": "company",
+                          "name": "Tech Innovations Ltd",
+                          "linkedinUrl": "https://linkedin.com/company/tech-innovations",
+                          "website": "https://tech-innovations.co.uk",
+                          "domain": "tech-innovations.co.uk",
+                          "imageUrl": "https://example.com/company-logos/tech-innovations.jpg",
+                          "employeeSize": 12
+                        }
+                      }
+                    }
+                  ],
+                  "pagination": {
+                    "page": 1,
+                    "pageSize": 2,
+                    "hasNextPage": true
+                  },
+                  "meta": {
+                    "query": "Fintech CFOs in London",
+                    "searchType": "ai",
+                    "apiVersion": "v1"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid query or parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_ERROR",
+                    "message": "Invalid request parameters",
+                    "details": [
+                      {
+                        "code": "too_small",
+                        "minimum": 1,
+                        "type": "string",
+                        "message": "Query is required and must be non-empty",
+                        "path": ["query"]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "503": {
+            "description": "Service Unavailable - AI service temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "AI_SERVICE_UNAVAILABLE",
+                    "message": "AI service is temporarily unavailable"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/revoke": {
+      "post": {
+        "summary": "Revoke a user token",
+        "description": "Revokes the specified user token, preventing it from being used for future API requests. The user record remains unchanged.",
+        "operationId": "revokeUserToken",
+        "tags": ["Provisioned Users"],
+        "security": [{ "APIKey": [] }],
+        "parameters": [
+          {
+            "name": "x-access-token",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "The JWT to be revoked."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token revoked successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Token revoked successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Access token is required",
+                  "code": "MISSING_TOKEN"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "description": "Internal server error",
             "content": {
               "application/json": {
                 "schema": {
@@ -96,121 +1594,1533 @@
         }
       }
     },
-    "/plants/{id}": {
-      "delete": {
-        "description": "Deletes a single plant based on the ID supplied",
+    "/user/paths": {
+      "post": {
+        "summary": "Upsert Paths",
+        "description": "Import or update relationships for the authenticated user. Supports flexible input formats including simple strings, objects with scores, or mixed formats. The min_score parameter serves as a fallback value for people without explicit scores.",
+        "operationId": "upsertUserPaths",
+        "tags": ["User Relationships"],
+        "security": [{ "UserTokenAuth": [] }, { "APIKey": [] }],
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "description": "ID of plant to delete",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
+            "$ref": "#/components/parameters/UserIdentifierHeader"
           }
         ],
-        "responses": {
-          "204": {
-            "description": "Plant deleted",
-            "content": {}
-          },
-          "400": {
-            "description": "unexpected error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "webhooks": {
-    "/plant/webhook": {
-      "post": {
-        "description": "Information about a new plant added to the store",
         "requestBody": {
-          "description": "Plant added to the store",
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NewPlant"
+                "$ref": "#/components/schemas/UserRelationshipsRequest"
+              },
+              "examples": {
+                "simpleStrings": {
+                  "summary": "Simple string array with min_score",
+                  "value": {
+                    "min_score": 7,
+                    "people": [
+                      "user1@example.com",
+                      "linkedin.com/in/johndoe",
+                      "user3@example.com"
+                    ]
+                  }
+                },
+                "objectFormat": {
+                  "summary": "Object array with explicit scores",
+                  "value": {
+                    "people": [
+                      {
+                        "identifier": "user1@example.com",
+                        "score": 8
+                      },
+                      {
+                        "identifier": "linkedin.com/in/johndoe",
+                        "score": 9
+                      }
+                    ]
+                  }
+                },
+                "mixedFormat": {
+                  "summary": "Mixed format with both strings and objects",
+                  "value": {
+                    "min_score": 6,
+                    "people": [
+                      "simple@example.com",
+                      {
+                        "identifier": "custom@example.com",
+                        "score": 9
+                      },
+                      "linkedin.com/in/user",
+                      {
+                        "identifier": "noScore@example.com"
+                      }
+                    ]
+                  }
+                }
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Return a 200 status to indicate that the data was received successfully"
+            "description": "Relationships imported successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRelationshipsResponse"
+                },
+                "example": {
+                  "success": true,
+                  "summary": {
+                    "processed": 3,
+                    "created": 2,
+                    "updated": 1,
+                    "failed": 0
+                  },
+                  "results": [
+                    {
+                      "identifier": "user1@example.com",
+                      "status": "created",
+                      "person": {
+                        "id": "person-123",
+                        "name": "John Doe",
+                        "linkedin": "linkedin.com/in/johndoe"
+                      }
+                    },
+                    {
+                      "identifier": "user2@example.com",
+                      "status": "updated",
+                      "person": {
+                        "id": "person-456",
+                        "name": "Jane Smith",
+                        "linkedin": null
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "VALIDATION_ERROR",
+                    "message": "Invalid request data",
+                    "details": [
+                      {
+                        "path": "relationships.0",
+                        "message": "Invalid email address"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "UNAUTHORIZED",
+                    "message": "Authentication required"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "An internal error occurred while processing relationships"
+                  }
+                }
+              }
+            }
           }
         }
       }
     }
   },
   "components": {
+    "securitySchemes": {
+      "APIKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "secret-key",
+        "description": "API secret key (requires user-identifier header)"
+      },
+      "UserTokenAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-access-token",
+        "description": "JWT token obtained from /users/authorization endpoint"
+      }
+    },
     "schemas": {
-      "Plant": {
-        "required": [
-          "name"
-        ],
+      "Profile": {
         "type": "object",
         "properties": {
-          "name": {
-            "description": "The name of the plant",
-            "type": "string"
+          "village_id": {
+            "type": "string",
+            "example": "vill_123abc456",
+            "description": "Village ID of the person"
           },
-          "tag": {
-            "description": "Tag to specify the type",
-            "type": "string"
+          "first_name": {
+            "type": "string",
+            "example": "Richard",
+            "description": "First name of the person"
+          },
+          "last_name": {
+            "type": "string",
+            "example": "Hendricks",
+            "description": "Last name of the person"
+          },
+          "linkedin_url": {
+            "type": "string",
+            "example": "https://linkedin.com/in/richard-hendricks",
+            "description": "LinkedIn URL of the person"
+          },
+          "headline": {
+            "type": "string",
+            "example": "CEO at Pied Piper",
+            "description": "Headline of the person"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address of the person, not returned by default",
+            "example": "richard@piedpiper.com"
           }
         }
       },
-      "NewPlant": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Plant"
+      "Score": {
+        "type": "number",
+        "description": "Relationship strength score",
+        "example": 8.5
+      },
+      "ScoreLabel": {
+        "type": "string",
+        "enum": ["Excellent", "Very Good", "Good", "Okay", "Maybe"],
+        "description": "Human-readable label for the relationship strength",
+        "example": "Excellent"
+      },
+      "ScoreMetaItem": {
+        "type": "object",
+        "description": "Detailed reason for connection strength",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Work",
+            "description": "Category of the connection"
           },
-          {
-            "required": [
-              "id"
-            ],
+          "description": {
+            "type": "string",
+            "example": "Both worked at Pied Piper (12 employees) Jan '14 - Present",
+            "description": "Detailed description of the connection"
+          }
+        }
+      },
+      "ScoreMeta": {
+        "type": "array",
+        "description": "Detailed reasons for the connection strength",
+        "items": { "$ref": "#/components/schemas/ScoreMetaItem" }
+      },
+      "PathStarter": {
+        "type": "object",
+        "properties": {
+          "profile": { "$ref": "#/components/schemas/Profile" },
+          "score": { "$ref": "#/components/schemas/Score" },
+          "score_label": { "$ref": "#/components/schemas/ScoreLabel" },
+          "score_description": {
+            "type": "string",
+            "example": "🟢 Erlich can make a strong introduction",
+            "description": "Human-readable description of the connection"
+          },
+          "score_meta": { "$ref": "#/components/schemas/ScoreMeta" }
+        }
+      },
+      "Path": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["intro", "direct"]
+          },
+          "introducer": {
             "type": "object",
             "properties": {
-              "id": {
-                "description": "Identification number of the plant",
-                "type": "integer",
-                "format": "int64"
+              "profile": { "$ref": "#/components/schemas/Profile" },
+              "score": { "$ref": "#/components/schemas/Score" },
+              "score_label": { "$ref": "#/components/schemas/ScoreLabel" },
+              "score_meta": { "$ref": "#/components/schemas/ScoreMeta" }
+            }
+          },
+          "starters": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PathStarter" }
+          },
+          "summary": {
+            "type": "object",
+            "properties": {
+              "score": { "$ref": "#/components/schemas/Score" },
+              "score_label": { "$ref": "#/components/schemas/ScoreLabel" },
+              "description": {
+                "type": "string",
+                "description": "Human-readable description of the path"
               }
             }
           }
-        ]
+        }
+      },
+      "PersonPaths": {
+        "type": "object",
+        "description": "Complete response for paths to a person",
+        "properties": {
+          "target": {
+            "type": "object",
+            "description": "The person you're trying to reach",
+            "properties": {
+              "profile": { "$ref": "#/components/schemas/Profile" }
+            }
+          },
+          "count": {
+            "type": "integer",
+            "example": 1,
+            "description": "Total number of paths found"
+          },
+          "summary": {
+            "type": "object",
+            "description": "Overall summary of all paths to this person",
+            "properties": {
+              "score": { "$ref": "#/components/schemas/Score" },
+              "score_label": { "$ref": "#/components/schemas/ScoreLabel" },
+              "description": {
+                "type": "string",
+                "example": "🟢 Erlich Bachman → Peter Gregory → Gavin Belson (CEO)",
+                "description": "Human-readable summary of the best paths available"
+              }
+            }
+          },
+          "paths": {
+            "type": "array",
+            "description": "All available connection paths to the target",
+            "items": { "$ref": "#/components/schemas/Path" }
+          }
+        },
+        "example": {
+          "target": {
+            "profile": {
+              "village_id": "vill_999abc",
+              "first_name": "Gavin",
+              "last_name": "Belson",
+              "linkedin_url": "https://linkedin.com/in/gavin-belson",
+              "headline": "CEO at Hooli"
+            }
+          },
+          "count": 1,
+          "summary": {
+            "score": 8,
+            "score_label": "Excellent",
+            "description": "🟢 Erlich Bachman → Peter Gregory → Gavin Belson (CEO)"
+          },
+          "paths": [
+            {
+              "type": "intro",
+              "summary": {
+                "score": 8.5,
+                "score_label": "Excellent",
+                "description": "🟢 Erlich can intro via Peter Gregory (Lead investor)"
+              },
+              "starters": [
+                {
+                  "profile": {
+                    "village_id": "vill_789xyz",
+                    "first_name": "Erlich",
+                    "last_name": "Bachman",
+                    "linkedin_url": "https://linkedin.com/in/erlich-bachman",
+                    "headline": "Founder at Aviato"
+                  },
+                  "score": 8.5,
+                  "score_label": "Excellent",
+                  "score_description": "🟢 Erlich can make a strong introduction",
+                  "score_meta": [
+                    {
+                      "title": "Work",
+                      "description": "Both worked at Pied Piper (12 employees) Jan '14 - Present"
+                    },
+                    {
+                      "title": "LinkedIn",
+                      "description": "Both are connected on LinkedIn"
+                    }
+                  ]
+                }
+              ],
+              "introducer": {
+                "profile": {
+                  "village_id": "vill_456def",
+                  "first_name": "Peter",
+                  "last_name": "Gregory",
+                  "linkedin_url": "https://linkedin.com/in/peter-gregory",
+                  "headline": "Founder at Raviga Capital"
+                },
+                "score": 8.5,
+                "score_label": "Excellent",
+                "score_meta": [
+                  {
+                    "title": "Work",
+                    "description": "Both worked at Raviga Capital (50 employees) Jan '13 - Dec '15"
+                  },
+                  {
+                    "title": "LinkedIn",
+                    "description": "Both are connected on LinkedIn"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "CompanyPathsResponse": {
+        "type": "object",
+        "properties": {
+          "company": {
+            "type": "object",
+            "description": "The target company",
+            "properties": {
+              "name": {
+                "type": "string",
+                "example": "Hooli"
+              },
+              "linkedin_url": {
+                "type": "string",
+                "example": "https://linkedin.com/company/hooli"
+              }
+            }
+          },
+          "summary": {
+            "type": "object",
+            "description": "Overall summary across all target people",
+            "properties": {
+              "score": { "$ref": "#/components/schemas/Score" },
+              "score_label": { "$ref": "#/components/schemas/ScoreLabel" }
+            }
+          },
+          "target_people": {
+            "type": "array",
+            "description": "List of people at the company with their connection paths",
+            "items": {
+              "type": "object",
+              "properties": {
+                "target": {
+                  "type": "object",
+                  "properties": {
+                    "avatar": { "type": "string" },
+                    "first_name": { "type": "string" },
+                    "full_name": { "type": "string" },
+                    "id": { "type": "string" },
+                    "identity_id": { "type": "string" },
+                    "last_name": { "type": "string" },
+                    "linkedin_identifier": { "type": "string" },
+                    "linkedin_url": { "type": "string" },
+                    "title": { "type": "string", "nullable": true },
+                    "village_person_url": { "type": "string" }
+                  }
+                },
+                "paths": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Path" }
+                },
+                "summary": {
+                  "type": "object",
+                  "properties": {
+                    "score": { "$ref": "#/components/schemas/Score" },
+                    "score_label": {
+                      "$ref": "#/components/schemas/ScoreLabel"
+                    },
+                    "description": { "type": "string" }
+                  }
+                },
+                "count": { "type": "integer" }
+              }
+            },
+            "example": [
+              {
+                "target": {
+                  "profile": {
+                    "village_id": "vill_999abc",
+                    "first_name": "Gavin",
+                    "last_name": "Belson",
+                    "linkedin_url": "https://linkedin.com/in/gavin-belson",
+                    "headline": "CEO at Hooli"
+                  }
+                },
+                "count": 1,
+                "summary": {
+                  "score": 8,
+                  "score_label": "Excellent",
+                  "description": "🟢 Erlich Bachman → Peter Gregory → Gavin Belson (CEO)"
+                },
+                "paths": [
+                  {
+                    "type": "intro",
+                    "starters": [
+                      {
+                        "profile": {
+                          "village_id": "vill_789xyz",
+                          "first_name": "Erlich",
+                          "last_name": "Bachman",
+                          "linkedin_url": "https://linkedin.com/in/erlich-bachman",
+                          "headline": "Founder at Aviato"
+                        },
+                        "score": 8.5,
+                        "score_label": "Excellent",
+                        "score_description": "🟢 Erlich can make a strong introduction",
+                        "score_meta": [
+                          {
+                            "title": "Work",
+                            "description": "Both worked at Pied Piper (12 employees) Jan '14 - Dec '16"
+                          },
+                          {
+                            "title": "LinkedIn",
+                            "description": "Both are connected on LinkedIn"
+                          }
+                        ]
+                      }
+                    ],
+                    "introducer": {
+                      "profile": {
+                        "village_id": "vill_456def",
+                        "first_name": "Peter",
+                        "last_name": "Gregory",
+                        "linkedin_url": "https://linkedin.com/in/peter-gregory",
+                        "headline": "Founder at Raviga Capital"
+                      },
+                      "score": 8.5,
+                      "score_label": "Excellent",
+                      "score_meta": [
+                        {
+                          "title": "Work",
+                          "description": "Both worked at Hooli (5000 employees) Jan '08 - Jan '12. Peter as Board Member while Gavin as CEO"
+                        },
+                        {
+                          "title": "Verified interactions",
+                          "description": "Met 15 times for board meetings"
+                        }
+                      ]
+                    },
+                    "summary": {
+                      "score": 8.5,
+                      "score_label": "Excellent",
+                      "description": "🟢 Erlich can intro via Peter Gregory (Lead investor)"
+                    }
+                  }
+                ]
+              },
+              {
+                "target": {
+                  "profile": {
+                    "village_id": "vill_888xyz",
+                    "first_name": "Nelson",
+                    "last_name": "Bighetti",
+                    "linkedin_url": "https://linkedin.com/in/big-head",
+                    "headline": "CTO at Hooli"
+                  }
+                },
+                "count": 1,
+                "summary": {
+                  "score": 9,
+                  "score_label": "Excellent",
+                  "description": "🟢 Richard Hendricks (direct)"
+                },
+                "paths": [
+                  {
+                    "type": "direct",
+                    "introducer": {
+                      "profile": {
+                        "village_id": "vill_123abc456",
+                        "first_name": "Richard",
+                        "last_name": "Hendricks",
+                        "linkedin_url": "https://linkedin.com/in/richard-hendricks",
+                        "headline": "CEO at Pied Piper"
+                      },
+                      "score": 9.0,
+                      "score_label": "Excellent",
+                      "score_description": "🟢 You can reach out directly (college roommate)"
+                    },
+                    "starters": [
+                      {
+                        "profile": {
+                          "village_id": "vill_123abc456",
+                          "first_name": "Richard",
+                          "last_name": "Hendricks",
+                          "linkedin_url": "https://linkedin.com/in/richard-hendricks",
+                          "headline": "CEO at Pied Piper"
+                        },
+                        "score": 9.0,
+                        "score_label": "Excellent",
+                        "score_description": "🟢 You can reach out directly (college roommate)",
+                        "score_meta": [
+                          {
+                            "title": "Personal",
+                            "description": "Former roommates at the Hacker Hostel"
+                          },
+                          {
+                            "title": "Work",
+                            "description": "Both worked at Pied Piper (12 employees) Jan '14 - Jun '14"
+                          }
+                        ]
+                      }
+                    ],
+                    "summary": {
+                      "score": 9.0,
+                      "score_label": "Excellent",
+                      "description": "🟢 You can reach out directly (college roommate)"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "count": {
+            "type": "integer",
+            "example": 9,
+            "description": "Total number of people found at the company"
+          }
+        }
+      },
+      "SortResponse": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "description": "LinkedIn URL or domain URL that was provided in the request"
+            },
+            "score": { "$ref": "#/components/schemas/Score" },
+            "score_label": { "$ref": "#/components/schemas/ScoreLabel" },
+            "error": {
+              "type": "string",
+              "description": "Error message if the URL couldn't be processed"
+            }
+          }
+        }
+      },
+      "TopCompaniesResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Array of top companies ranked by relationship strength",
+            "items": {
+              "type": "object",
+              "properties": {
+                "domain_name": {
+                  "type": "string",
+                  "description": "Domain name of the company"
+                },
+                "linkedin_url": {
+                  "type": "string",
+                  "description": "LinkedIn URL of the company"
+                },
+                "score": {
+                  "type": "number",
+                  "description": "Relationship strength score"
+                },
+                "score_label": {
+                  "type": "string",
+                  "enum": ["Excellent", "Very Good", "Good", "Okay", "Maybe"],
+                  "description": "Human-readable label for the relationship strength"
+                }
+              }
+            }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "integer",
+                "description": "Current page number"
+              },
+              "limit": {
+                "type": "integer",
+                "description": "Number of results per page"
+              },
+              "hasNextPage": {
+                "type": "boolean",
+                "description": "Whether there are more pages available"
+              }
+            }
+          }
+        }
       },
       "Error": {
-        "required": [
-          "error",
-          "message"
-        ],
         "type": "object",
         "properties": {
           "error": {
-            "type": "integer",
-            "format": "int32"
+            "type": "string",
+            "description": "Error message"
           },
-          "message": {
-            "type": "string"
+          "code": {
+            "type": "string",
+            "description": "Error code for machine reading"
           }
         }
+      },
+      "EmailEnrichmentResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request was successful"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "email": {
+                "type": "string",
+                "description": "Enriched email address",
+                "example": "richard@piedpiper.com"
+              },
+              "linkedinUrl": {
+                "type": "string",
+                "description": "LinkedIn URL of the person",
+                "example": "https://www.linkedin.com/in/richard-hendricks/"
+              }
+            }
+          }
+        }
+      },
+      "BulkEmailEnrichmentResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request was successful"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "profiles": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "linkedinUrl": {
+                      "type": "string",
+                      "description": "LinkedIn URL of the person",
+                      "example": "https://www.linkedin.com/in/richard-hendricks"
+                    },
+                    "email": {
+                      "type": "string",
+                      "description": "Enriched email address",
+                      "example": "richard@piedpiper.com"
+                    },
+                    "villageId": {
+                      "type": "string",
+                      "description": "Village ID of the person",
+                      "example": "vill_123abc456"
+                    },
+                    "error": {
+                      "type": "string",
+                      "description": "Error message if enrichment failed",
+                      "example": "Person not found or missing LinkedIn information for provided Village ID."
+                    }
+                  }
+                },
+                "example": [
+                  {
+                    "linkedinUrl": "https://www.linkedin.com/in/richard-hendricks",
+                    "email": "richard@piedpiper.com"
+                  },
+                  {
+                    "linkedinUrl": "https://www.linkedin.com/in/erlich-bachman",
+                    "email": "erlich@aviato.com"
+                  },
+                  {
+                    "villageId": "vill_789xyz",
+                    "error": "Person not found or missing LinkedIn information for provided Village ID."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "List": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 42 },
+          "title": { "type": "string", "example": "Seed investors" },
+          "type": {
+            "type": "string",
+            "enum": ["people", "company"],
+            "example": "people"
+          },
+          "description": { "type": "string" },
+          "is_public": { "type": "boolean", "example": false },
+          "fit_count": { "type": "integer", "example": 18 },
+          "created_date": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-06-26T12:00:00Z"
+          }
+        }
+      },
+      "ListsPage": {
+        "type": "object",
+        "properties": {
+          "lists": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/List" }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "total": { "type": "integer", "example": 2 },
+              "page": { "type": "integer", "example": 1 },
+              "limit": { "type": "integer", "example": 20 },
+              "hasNextPage": { "type": "boolean", "example": false }
+            }
+          }
+        }
+      },
+      "ListItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 101 },
+          "graph_id": { "type": "string", "example": "186532" },
+          "type": {
+            "type": "string",
+            "enum": ["people", "company"],
+            "example": "people"
+          },
+          "data": { "type": "object" }
+        }
+      },
+      "ListItemsPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ListItem" }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/ListsPage/properties/pagination"
+          }
+        }
+      },
+      "ListDelete": {
+        "type": "object",
+        "required": ["success", "message"],
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": {
+            "type": "string",
+            "example": "List deleted successfully"
+          }
+        }
+      },
+      "PeopleSearchResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "data": {
+            "type": "array",
+            "description": "Array of people search results",
+            "items": { "$ref": "#/components/schemas/PersonSearchResult" }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "integer",
+                "description": "Current page number"
+              },
+              "pageSize": {
+                "type": "integer",
+                "description": "Number of results per page"
+              },
+              "hasNextPage": {
+                "type": "boolean",
+                "description": "Whether there are more pages available"
+              }
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "The original search query"
+              },
+              "searchType": {
+                "type": "string",
+                "description": "Type of search performed"
+              },
+              "apiVersion": {
+                "type": "string",
+                "description": "API version used"
+              }
+            }
+          }
+        }
+      },
+      "CompaniesSearchResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Indicates if the request was successful"
+          },
+          "data": {
+            "type": "array",
+            "description": "Array of company search results",
+            "items": { "$ref": "#/components/schemas/CompanySearchResult" }
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "integer",
+                "description": "Current page number"
+              },
+              "pageSize": {
+                "type": "integer",
+                "description": "Number of results per page"
+              },
+              "hasNextPage": {
+                "type": "boolean",
+                "description": "Whether there are more pages available"
+              }
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "The original search query"
+              },
+              "searchType": {
+                "type": "string",
+                "description": "Type of search performed"
+              },
+              "apiVersion": {
+                "type": "string",
+                "description": "API version used"
+              }
+            }
+          }
+        }
+      },
+      "PeopleSearchResults": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "full_name": { "type": "string" },
+                "linkedin_url": { "type": "string" },
+                "location": { "type": "string" },
+                "warmth_score": { "type": "number" },
+                "relevant_work": {
+                  "type": "object",
+                  "properties": {
+                    "position": { "type": "string" },
+                    "company": {
+                      "type": "object",
+                      "properties": {
+                        "name": { "type": "string" },
+                        "linkedin_url": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "pagination": { "$ref": "#/components/schemas/SearchPagination" }
+        }
+      },
+      "CompanySearchResults": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "name": { "type": "string" },
+                "linkedin_url": { "type": "string" },
+                "website": { "type": "string" },
+                "relationship_cached": {
+                  "type": "object",
+                  "properties": {
+                    "warmth_score": { "type": "number" }
+                  }
+                }
+              }
+            }
+          },
+          "pagination": { "$ref": "#/components/schemas/SearchPagination" }
+        }
+      },
+      "SearchPagination": {
+        "type": "object",
+        "properties": {
+          "page": { "type": "integer" },
+          "pageSize": { "type": "integer" },
+          "hasNextPage": { "type": "boolean" }
+        }
+      },
+      "PersonSearchResult": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the person"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["person"],
+            "description": "Type of result"
+          },
+          "avatar": {
+            "type": "string",
+            "description": "URL to person's avatar image"
+          },
+          "country": { "type": "string", "description": "Person's country" },
+          "firstName": {
+            "type": "string",
+            "description": "Person's first name"
+          },
+          "lastName": { "type": "string", "description": "Person's last name" },
+          "fullName": { "type": "string", "description": "Person's full name" },
+          "linkedinIdentifier": {
+            "type": "string",
+            "description": "LinkedIn identifier"
+          },
+          "linkedinUrl": {
+            "type": "string",
+            "description": "LinkedIn profile URL"
+          },
+          "location": { "type": "string", "description": "Person's location" },
+          "villageUrl": {
+            "type": "string",
+            "description": "Village profile URL"
+          },
+          "warmthScore": {
+            "type": "number",
+            "description": "Relationship warmth score"
+          },
+          "relationship": {
+            "type": "object",
+            "properties": {
+              "warmthScore": { "type": "number" },
+              "paths": {
+                "type": "object",
+                "properties": {
+                  "count": { "type": "integer" },
+                  "ids": { "type": "array", "items": { "type": "string" } },
+                  "avatars": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            }
+          },
+          "currentWork": {
+            "type": "object",
+            "properties": {
+              "position": { "type": "string" },
+              "startDate": { "type": "string", "format": "date" },
+              "endDate": {
+                "type": "string",
+                "format": "date",
+                "nullable": true
+              },
+              "company": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "type": { "type": "string" },
+                  "name": { "type": "string" },
+                  "linkedinUrl": { "type": "string" },
+                  "website": { "type": "string" },
+                  "domain": { "type": "string" },
+                  "imageUrl": { "type": "string" },
+                  "employeeSize": { "type": "integer" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "CompanySearchResult": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the company"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["company"],
+            "description": "Type of result"
+          },
+          "name": { "type": "string", "description": "Company name" },
+          "linkedinId": {
+            "type": "integer",
+            "description": "LinkedIn company ID"
+          },
+          "linkedinUrl": {
+            "type": "string",
+            "description": "LinkedIn company URL"
+          },
+          "website": { "type": "string", "description": "Company website URL" },
+          "domain": { "type": "string", "description": "Company domain" },
+          "employeeSize": {
+            "type": "integer",
+            "description": "Number of employees"
+          },
+          "sizeRange": {
+            "type": "string",
+            "description": "Employee size range"
+          },
+          "founded": {
+            "type": "integer",
+            "description": "Year company was founded"
+          },
+          "description": {
+            "type": "string",
+            "description": "Company description"
+          }
+        }
+      },
+      "PersonEnrichmentResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request was successful"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "profile": {
+                  "type": "object",
+                  "properties": {
+                    "full_name": { "type": "string" },
+                    "linkedin_url": { "type": "string" },
+                    "avatar": { "type": "string" },
+                    "location": { "type": "string" },
+                    "headline": { "type": "string" }
+                  }
+                },
+                "current_work": {
+                  "type": "object",
+                  "properties": {
+                    "position": { "type": "string" },
+                    "start_date": { "type": "string" },
+                    "end_date": { "type": "string", "nullable": true },
+                    "company": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string" },
+                        "type": { "type": "string" },
+                        "name": { "type": "string" },
+                        "linkedin_url": { "type": "string" },
+                        "website": { "type": "string" },
+                        "domain": { "type": "string" },
+                        "employee_size": { "type": "integer" }
+                      }
+                    }
+                  }
+                },
+
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "code": { "type": "string" },
+                    "message": { "type": "string" },
+                    "identifier": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "example": {
+          "success": true,
+          "data": [
+            {
+              "profile": {
+                "full_name": "John Doe",
+                "linkedin_url": "https://linkedin.com/in/johndoe",
+                "avatar": "https://village.sfo3.cdn.digitaloceanspaces.com/avatar.jpg",
+                "location": "San Francisco, CA",
+                "headline": "Software Engineer at TechCorp"
+              },
+              "current_work": {
+                "position": "Senior Software Engineer",
+                "start_date": "2023-01-01",
+                "end_date": null,
+                "company": {
+                  "id": "techcorp-123",
+                  "type": "company",
+                  "name": "TechCorp",
+                  "linkedin_url": "https://linkedin.com/company/techcorp",
+                  "website": "https://techcorp.com",
+                  "domain": "techcorp.com",
+                  "employee_size": 500
+                }
+              }
+            }
+          ]
+        }
+      },
+      "CompanyEnrichmentResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request was successful"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "company": {
+                  "type": "object",
+                  "properties": {
+                    "village_id": { "type": "string" },
+                    "name": { "type": "string" },
+                    "linkedin_url": { "type": "string" },
+                    "website": { "type": "string" },
+                    "domain": { "type": "string" },
+                    "employee_size": { "type": "integer" },
+                    "industry": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    },
+                    "crunchbase_url": { "type": "string" },
+                    "founded": { "type": "integer" },
+                    "description": { "type": "string" }
+                  }
+                },
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "code": { "type": "string" },
+                    "message": { "type": "string" },
+                    "identifier": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "example": {
+          "success": true,
+          "data": [
+            {
+              "company": {
+                "village_id": "company-123",
+                "name": "TechCorp Inc",
+                "linkedin_url": "https://linkedin.com/company/techcorp",
+                "website": "https://techcorp.com",
+                "domain": "techcorp.com",
+                "employee_size": 500,
+                "industry": ["Technology", "Software"],
+                "crunchbase_url": "https://crunchbase.com/organization/techcorp",
+                "founded": 2015,
+                "description": "Leading technology company specializing in enterprise software solutions."
+              }
+            }
+          ]
+        }
+      },
+      "UserRelationshipInput": {
+        "type": "object",
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "description": "Village ID, email address, or LinkedIn URL",
+            "example": "user@example.com"
+          },
+          "score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10,
+            "description": "Optional relationship strength score (0-10). Score Guidelines: 0.5-0.99 (Maybe; Not cold), 1-4 (Okay; Know each other; Have access to them), 4-7.49 (Good; Somewhat close), 7.5-9.99 (Very good; Close), 10 (Excellent; Closest)",
+            "example": 8
+          }
+        },
+        "required": ["identifier"]
+      },
+      "UserRelationshipsRequest": {
+        "type": "object",
+        "properties": {
+          "people": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "description": "Array of person identifiers. Can be Village IDs, emails, LinkedIn URLs, or objects with scores, or mixed. Supports flexible input formats.",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "description": "Simple identifier (Village ID, email, or LinkedIn URL)",
+                  "example": "user@example.com"
+                },
+                {
+                  "$ref": "#/components/schemas/UserRelationshipInput"
+                }
+              ]
+            }
+          },
+          "min_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10,
+            "description": "Optional fallback score applied to all people without explicit score. Score Guidelines: 0.5-0.99 (Maybe; Not cold), 1-4 (Okay; Know each other; Have access to them), 4-7.49 (Good; Somewhat close), 7.5-9.99 (Very good; Close), 10 (Excellent; Closest)",
+            "example": 7
+          }
+        },
+        "required": ["people"]
+      },
+      "UserRelationshipResult": {
+        "type": "object",
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "description": "The identifier that was processed",
+            "example": "user@example.com"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["created", "updated", "failed"],
+            "description": "The result status for this relationship",
+            "example": "created"
+          },
+          "person": {
+            "type": "object",
+            "description": "Person details if found",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Village person ID",
+                "example": "person-123"
+              },
+              "name": {
+                "type": "string",
+                "description": "Full name of the person",
+                "example": "John Doe"
+              },
+              "linkedin": {
+                "type": "string",
+                "nullable": true,
+                "description": "LinkedIn URL of the person",
+                "example": "linkedin.com/in/johndoe"
+              }
+            }
+          },
+          "error": {
+            "type": "object",
+            "description": "Error details if the operation failed",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "PERSON_NOT_FOUND",
+                  "INVALID_IDENTIFIER",
+                  "SYSTEM_ERROR",
+                  "VALIDATION_ERROR"
+                ],
+                "description": "Error code",
+                "example": "PERSON_NOT_FOUND"
+              },
+              "message": {
+                "type": "string",
+                "description": "Human-readable error message",
+                "example": "No person found with this identifier"
+              }
+            }
+          }
+        },
+        "required": ["identifier", "status"]
+      },
+      "UserRelationshipsResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the operation was successful",
+            "example": true
+          },
+          "summary": {
+            "type": "object",
+            "description": "Summary of the import operation",
+            "properties": {
+              "processed": {
+                "type": "integer",
+                "description": "Total number of relationships processed",
+                "example": 3
+              },
+              "created": {
+                "type": "integer",
+                "description": "Number of new relationships created",
+                "example": 2
+              },
+              "updated": {
+                "type": "integer",
+                "description": "Number of existing relationships updated",
+                "example": 1
+              },
+              "failed": {
+                "type": "integer",
+                "description": "Number of relationships that failed to process",
+                "example": 0
+              }
+            },
+            "required": ["processed", "created", "updated", "failed"]
+          },
+          "results": {
+            "type": "array",
+            "description": "Detailed results for each relationship",
+            "items": {
+              "$ref": "#/components/schemas/UserRelationshipResult"
+            }
+          }
+        },
+        "required": ["success", "summary", "results"]
+      },
+      "ValidationError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string" },
+              "message": { "type": "string" },
+              "details": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "code": { "type": "string" },
+                    "message": { "type": "string" },
+                    "path": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ApiError": {
+        "allOf": [{ "$ref": "#/components/schemas/Error" }]
       }
     },
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer"
+    "parameters": {
+      "UserIdentifierHeader": {
+        "name": "user-identifier",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "Specify the user making the request. This identifier should match the one you used when integrating the user with Village. **Not needed when using user token authentication.**"
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad Request - Check the request parameters",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Invalid parameter: url must be a valid LinkedIn URL",
+              "code": "INVALID_PARAMETER"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthorized - Invalid API key",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Invalid API key",
+              "code": "INVALID_API_KEY"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Not Found - Resource doesn't exist",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "User not found",
+              "code": "USER_NOT_FOUND"
+            }
+          }
+        }
+      },
+      "TooManyRequests": {
+        "description": "Too Many Requests - Rate limit exceeded",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Rate limit exceeded. Try again in 60 seconds",
+              "code": "RATE_LIMIT_EXCEEDED"
+            }
+          }
+        }
       }
     }
   }
