@@ -3,97 +3,143 @@ title: "Introduction"
 description: "Village Relationship Intelligence API Documentation"
 ---
 
-## Welcome
+## Base URL
 
-Welcome to Village's API documentation. Our API enables partners to access connection paths and relationship data through their integrated applications. You can use these endpoints to add relationship intelligence features to your applications, such as showing connection paths to LinkedIn profiles.
+```
+https://api.village.ai/v2
+```
 
 ## Authentication
 
-All API endpoints require an API key for authentication. To get your API key:
-
-1. Log in to the Village Platform Admin
-
-2. Navigate to API Keys
-
-3. Create a new API key or copy your existing one
-
-Include your API key in all requests using the following header:
+All requests require a bearer token in the `Authorization` header:
 
 ```bash
-secret-key: YOUR_API_KEY
+Authorization: Bearer <token>
 ```
 
-For testing purposes, if your app is not live yet, you can use this test key:
+### Getting a Token
+
+**If you're a partner integrating Village:**
+
+1. Get your API key (starts with `sk_`) from Village Platform Admin
+2. Generate a user token for each of your users:
 
 ```bash
-secret-key: demo_sk_global
+curl https://api.village.ai/v2/auth/tokens \
+  -H "secret-key: sk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "external_user_id": "your_user_id",
+    "email": "user@example.com"
+  }'
 ```
 
-## User Identification
-
-Most endpoints require a user identifier to specify which end-user's network we're referencing. This identifier should match the one you used when integrating the user with Village. Include it in the request headers:
+3. Use the returned `access_token` in API requests
 
 ```bash
-user-identifier: YOUR_USER_IDENTIFIER
+curl https://api.village.ai/v2/people/paths \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://linkedin.com/in/johndoe"
+  }'
 ```
 
-For testing purposes, if your app is not live yet, you can use this test identifier:
+**If you're a direct user:**
+
+Generate an API key (starts with `ak_`) from your Village dashboard and use it directly as the bearer token.
+
+## Making Requests
 
 ```bash
-user-identifier: test_user_identifier
+curl https://api.village.ai/v2/people/paths \
+  -H "Authorization: Bearer <api_key>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://linkedin.com/in/johndoe"
+  }'
 ```
 
-For example, if you integrated user "123" from your system with Village, you would use "123" as the identifier in your API requests to reference that user's network.
+### Identifiers
 
-## Core Concepts
+Most endpoints accept a `url` parameter that can be:
 
-* 🛣️ **Paths**: Connection routes showing how you can reach someone through your network
+- LinkedIn profile URL: `https://linkedin.com/in/johndoe`
+- LinkedIn company URL: `https://linkedin.com/company/acme`
+- Company domain: `acme.com`
 
-* 📊 **Score**: Numerical values indicating relationship strength
+## Response Format
 
-* 🤝 **Introducers**: People who can make direct introductions to your target
+**Success (2xx):**
 
-* 🚀 **Starters**: Your direct connections who can kick off the introduction chain
+```json
+{
+  "data": { ... },
+  "metadata": { ... },
+}
+```
+
+**Error (4xx/5xx):**
+
+```json
+{
+  "error": {
+    "type": "validation_error",
+    "status": 400,
+    "detail": "Request validation failed",
+    "trace_id": "trace_abc123"
+  },
+  "metadata": { ... },
+}
+```
+
+Check the HTTP status code to determine success or failure.
 
 ## Rate Limits
 
-* 100 requests per second per API key
+- **Per User**: 100 requests/minute
+- **Per Partner**: 10,000 requests/minute
+- **Search Endpoints**: 20 requests/minute
 
-* Contact support to increase limits
+Check response headers for current limits:
 
-## Base URL
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1704542430
+```
 
-The API is available at:
+## Errors
 
-* [`https://api.village.do/v1`](https://api.village.do/v1)
+| Status | Type                   | Description                                    |
+| ------ | ---------------------- | ---------------------------------------------- |
+| 400    | `validation_error`     | Invalid request parameters                     |
+| 401    | `authentication_error` | Invalid or missing token                       |
+| 403    | `authorization_error`  | Insufficient permissions                       |
+| 404    | `not_found_error`      | Resource not found                             |
+| 429    | `rate_limit_error`     | Rate limit exceeded                            |
+| 500    | `internal_error`       | Server error - contact support with `trace_id` |
 
-## Error Responses
+## Endpoints
 
-All endpoints may return these error responses:
-
-| Status | Description                                    |
-| ------ | ---------------------------------------------- |
-| 400    | Bad Request - Check the request parameters     |
-| 401    | Unauthorized - Invalid API key                 |
-| 403    | Forbidden - Insufficient permissions           |
-| 404    | Not Found - Resource doesn't exist             |
-| 429    | Too Many Requests - Rate limit exceeded        |
-| 500    | Internal Server Error - Please contact support |
-
-## Available Endpoints
-
-Our API provides endpoints in three main categories:
-
-<CardGroup>
-  <Card title="People Endpoints" icon="user" href="/api-reference/people">
-    Find connection paths to people and sort contacts by relationship strength
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="key" href="/api-reference/authentication">
+    Generate user tokens
   </Card>
 
-  <Card title="Companies Endpoints" icon="building" href="/api-reference/companies">
-    Discover company relationships and connection paths
-  </Card>
+{" "}
 
-  <Card title="Provisioned Users Endpoints" icon="users" href="/api-reference/provisioned-users">
-    Manage provisioned users and their subscriptions
+<Card title="User" icon="user-circle" href="/api-reference/user">
+  User profile and integrations
+</Card>
+
+{" "}
+
+<Card title="People" icon="users" href="/api-reference/people">
+  Connection paths and search
+</Card>
+
+  <Card title="Companies" icon="building" href="/api-reference/companies">
+    Company connections and search
   </Card>
 </CardGroup>
