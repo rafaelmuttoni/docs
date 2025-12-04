@@ -38,7 +38,7 @@
     {
       "name": "API Reference",
       "url": "api-reference",
-      "openapi": "/api-reference/openapi.json"
+      "openapi": "https://api-stg.village.do/v2/docs/openapi.json"
     }
   ],
   "anchors": [
