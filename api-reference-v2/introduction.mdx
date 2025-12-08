@@ -1,0 +1,73 @@
+---
+title: "Introduction"
+description: "Village Relationship Intelligence API V2 Documentation (Preview)"
+---
+
+## Welcome
+
+Welcome to Village's API V2 documentation. This is a preview version of our next-generation API with improved endpoints and additional features.
+
+<Warning>
+  This API version is in preview. Some endpoints may change before the stable release.
+</Warning>
+
+## Authentication
+
+All API endpoints require an API key for authentication. To get your API key:
+
+1. Log in to the Village Platform Admin
+
+2. Navigate to API Keys
+
+3. Create a new API key or copy your existing one
+
+Include your API key in all requests using the following header:
+
+```bash
+secret-key: YOUR_API_KEY
+```
+
+For testing purposes, if your app is not live yet, you can use this test key:
+
+```bash
+secret-key: demo_sk_global
+```
+
+## User Identification
+
+Most endpoints require a user identifier to specify which end-user's network we're referencing. This identifier should match the one you used when integrating the user with Village. Include it in the request headers:
+
+```bash
+user-identifier: YOUR_USER_IDENTIFIER
+```
+
+For testing purposes, if your app is not live yet, you can use this test identifier:
+
+```bash
+user-identifier: test_user_identifier
+```
+
+## Base URL
+
+The V2 API is available at:
+
+* [`https://api.village.do/v2`](https://api.village.do/v2)
+
+## Rate Limits
+
+* 100 requests per second per API key
+
+* Contact support to increase limits
+
+## Error Responses
+
+All endpoints may return these error responses:
+
+| Status | Description                                    |
+| ------ | ---------------------------------------------- |
+| 400    | Bad Request - Check the request parameters     |
+| 401    | Unauthorized - Invalid API key                 |
+| 403    | Forbidden - Insufficient permissions           |
+| 404    | Not Found - Resource doesn't exist             |
+| 429    | Too Many Requests - Rate limit exceeded        |
+| 500    | Internal Server Error - Please contact support |
